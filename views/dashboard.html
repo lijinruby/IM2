@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard — ALEK</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- 1. Include Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="shell">
+        <div class="sidebar">
+            <div class="brand"><div class="brand-mark">A</div><div>ALEK Consultants</div></div>
+            <div class="nav">
+                <a href="dashboard.html" class="nav-item active">Dashboard</a>
+                <a href="clients.html" class="nav-item" data-role="admin">Clients</a>
+                <a href="projects.html" class="nav-item" data-role="admin">Projects</a>
+                <a href="projects.html" class="nav-item" data-role="pm">My Projects</a>
+                <a href="billing.html" class="nav-item">Billing</a>
+                <a href="payments.html" class="nav-item" data-role="admin">Payments</a>
+            </div>
+            <div style="padding:20px; border-top:1px solid rgba(255,255,255,0.1)">
+                <a href="#" onclick="logout()" style="color:white; font-size:12px; text-decoration:none">Logout</a>
+            </div>
+        </div>
+        <div class="main">
+            <div class="topbar"><h1>Dashboard</h1><div class="pill amber" id="userTag">User</div></div>
+            <div class="page">
+                
+                <!-- Admin KPIs -->
+                <div class="kpi-row" data-role="admin">
+                    <div class="kpi"><div class="label">Total Billed</div><div class="value" id="admin-total">₱0</div></div>
+                    <div class="kpi"><div class="label">Total Collected</div><div class="value" id="admin-collected" style="color:var(--green)">₱0</div></div>
+                    <div class="kpi"><div class="label">Outstanding</div><div class="value" id="admin-outstanding" style="color:var(--red)">₱0</div></div>
+                </div>
+
+                <!-- PM KPIs -->
+                <div class="kpi-row" data-role="pm">
+                    <div class="kpi"><div class="label">My Active Projects</div><div class="value" id="pm-projects">0</div></div>
+                    <div class="kpi"><div class="label">Pending My Approval</div><div class="value" id="pm-pending">0</div></div>
+                </div>
+
+                <!-- Client KPIs -->
+                <div class="kpi-row" data-role="client">
+                    <div class="kpi"><div class="label">Current Balance</div><div class="value" id="client-balance">₱0</div></div>
+                    <div class="kpi"><div class="label">Total Paid to Date</div><div class="value" id="client-paid">₱0</div></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head"><h3>System Announcements</h3></div>
+                    <div style="padding:24px">
+                        <p id="welcomeMessage">Loading your dashboard...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/auth.js"></script>
+
+    <script>
+        // Currency Formatter
+        const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        async function loadDashboardData() {
+            const role = localStorage.getItem('userRole');
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) return;
+
+            document.getElementById('welcomeMessage').innerText = `Welcome back! You are logged in as a ${role.toUpperCase()}.`;
+
+            if (role === 'admin') {
+                // ADMIN: Fetch all billing records
+                const { data: bills } = await supabase.from('billing').select('amount, status');
+                
+                let total = 0;
+                let collected = 0;
+
+                bills.forEach(b => {
+                    total += parseFloat(b.amount);
+                    if (b.status.toLowerCase() === 'paid') collected += parseFloat(b.amount);
+                });
+
+                document.getElementById('admin-total').innerText = php.format(total);
+                document.getElementById('admin-collected').innerText = php.format(collected);
+                document.getElementById('admin-outstanding').innerText = php.format(total - collected);
+            } 
+
+            else if (role === 'pm') {
+                // PM: Fetch projects assigned to this PM
+                const { count: projCount } = await supabase
+                    .from('projects')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('pm_id', user.id);
+
+                document.getElementById('pm-projects').innerText = projCount || 0;
+            }
+
+            else if (role === 'client') {
+                // CLIENT: Fetch bills for this specific client
+                // 1. Get the profile to find the client_id
+                const { data: profile } = await supabase.from('profiles').select('client_id').eq('id', user.id).single();
+
+                if (profile && profile.client_id) {
+                    // 2. Get projects for this client
+                    const { data: projects } = await supabase.from('projects').select('id').eq('client_id', profile.client_id);
+                    const projectIds = projects.map(p => p.id);
+
+                    // 3. Get bills for these projects
+                    const { data: clientBills } = await supabase.from('billing').select('amount, status').in('project_id', projectIds);
+
+                    let balance = 0;
+                    let paid = 0;
+                    clientBills.forEach(b => {
+                        if (b.status.toLowerCase() === 'paid') paid += parseFloat(b.amount);
+                        else balance += parseFloat(b.amount);
+                    });
+
+                    document.getElementById('client-balance').innerText = php.format(balance);
+                    document.getElementById('client-paid').innerText = php.format(paid);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadDashboardData);
+    </script>
+</body>
+</html>

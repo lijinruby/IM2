@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Billing — ALEK</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- 1. Include Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="shell">
+        <div class="sidebar">
+            <div class="brand"><div class="brand-mark">A</div><div>ALEK Consultants</div></div>
+            <div class="nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="clients.html" class="nav-item" data-role="admin">Clients</a>
+                <a href="projects.html" class="nav-item" data-role="admin">Projects</a>
+                <a href="projects.html" class="nav-item" data-role="pm">My Projects</a>
+                <a href="billing.html" class="nav-item active">Billing</a>
+                <a href="payments.html" class="nav-item" data-role="admin">Payments</a>
+            </div>
+            <div style="padding:20px; border-top:1px solid rgba(255,255,255,0.1)">
+                <a href="#" onclick="logout()" style="color:white; font-size:12px; text-decoration:none">Logout</a>
+            </div>
+        </div>
+        <div class="main">
+            <div class="topbar"><h1>Billing Statements</h1></div>
+            <div class="page">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Recent Statements</h3>
+                        <a href="new-billing.html" class="btn btn-primary" data-role="admin">+ New Statement</a>
+                        <a href="new-billing.html" class="btn btn-primary" data-role="pm">+ Request Billing</a>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Project</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <!-- 2. Added ID 'billing-table' to the tbody -->
+                        <tbody id="billing-table">
+                            <tr><td colspan="5" style="text-align:center">Loading statements...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/auth.js"></script>
+    
+    <!-- 3. Script to fetch data from Supabase -->
+    <script>
+        async function loadBilling() {
+            // Fetch data from 'billing' and join with 'projects' to get the project name
+            const { data: bills, error } = await supabase
+                .from('billing')
+                .select(`
+                    id,
+                    amount,
+                    status,
+                    created_at,
+                    projects ( name )
+                `);
+
+            if (error) {
+                console.error("Error fetching billing:", error);
+                return;
+            }
+
+            const tableBody = document.getElementById('billing-table');
+            tableBody.innerHTML = ''; // Clear the loading message
+
+            if (bills.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center">No billing statements found.</td></tr>';
+                return;
+            }
+
+            bills.forEach(bill => {
+                // Formatting Date
+                const date = new Date(bill.created_at).toLocaleDateString();
+                
+                // Formatting Amount to PHP
+                const formattedAmount = new Intl.NumberFormat('en-PH', {
+                    style: 'currency',
+                    currency: 'PHP'
+                }).format(bill.amount);
+
+                // Determining Pill Color based on status
+                const statusClass = bill.status.toLowerCase() === 'paid' ? 'green' : 'amber';
+
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>BS-${bill.id.toString().slice(0, 5).toUpperCase()}</td>
+                        <td>${bill.projects ? bill.projects.name : 'Unknown Project'}</td>
+                        <td>${date}</td>
+                        <td>${formattedAmount}</td>
+                        <td><span class="pill ${statusClass}">${bill.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Run this when the page loads
+        document.addEventListener('DOMContentLoaded', loadBilling);
+    </script>
+</body>
+</html>

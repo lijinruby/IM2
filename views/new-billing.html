@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Bill — ALEK</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- 1. Include Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="shell">
+        <div class="sidebar">
+            <div class="brand"><div class="brand-mark">A</div><div>ALEK Consultants</div></div>
+            <div class="nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="billing.html" class="nav-item active">Billing</a>
+            </div>
+        </div>
+        <div class="main">
+            <div class="topbar"><h1>Generate Statement</h1></div>
+            <div class="page">
+                <div class="panel" style="max-width: 600px; margin: 0 auto;">
+                    <div style="padding:30px">
+                        <!-- 2. Added ID to Select -->
+                        <div class="field">
+                            <label>Project</label>
+                            <select id="project-select">
+                                <option value="">Loading projects...</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 3. Added IDs to Inputs -->
+                        <div class="field">
+                            <label>Amount (PHP)</label>
+                            <input type="number" id="bill-amount" placeholder="0.00">
+                        </div>
+                        
+                        <div class="field">
+                            <label>Billing Milestone / Reason</label>
+                            <textarea id="bill-reason" rows="4" placeholder="e.g. 50% Completion of DIA Study"></textarea>
+                        </div>
+                        
+                        <div style="display:flex; gap:10px; margin-top:20px">
+                            <!-- 4. Changed onclick to call our function -->
+                            <button onclick="createBill()" id="submit-btn" class="btn btn-primary">Create Statement</button>
+                            <a href="billing.html" class="btn" style="background:#eee">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/auth.js"></script>
+
+    <script>
+        // STEP 1: Fill the dropdown with real projects
+        async function loadProjectOptions() {
+            const { data: projects, error } = await supabase
+                .from('projects')
+                .select('id, name');
+
+            if (error) {
+                console.error("Error loading projects:", error);
+                return;
+            }
+
+            const select = document.getElementById('project-select');
+            select.innerHTML = '<option value="">-- Select a Project --</option>';
+
+            projects.forEach(proj => {
+                const option = document.createElement('option');
+                option.value = proj.id;
+                option.textContent = proj.name;
+                select.appendChild(option);
+            });
+        }
+
+        // STEP 2: Save the bill to Supabase
+        async function createBill() {
+            const projectId = document.getElementById('project-select').value;
+            const amount = document.getElementById('bill-amount').value;
+            const reason = document.getElementById('bill-reason').value; // In a real app, you might add a 'description' column to your table
+
+            if (!projectId || !amount) {
+                alert("Please select a project and enter an amount.");
+                return;
+            }
+
+            // Disable button to prevent double-clicks
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            const { data, error } = await supabase
+                .from('billing')
+                .insert([
+                    { 
+                        project_id: projectId, 
+                        amount: parseFloat(amount),
+                        status: 'Unpaid' // Default status
+                    }
+                ]);
+
+            if (error) {
+                alert("Error creating bill: " + error.message);
+                btn.innerText = "Create Statement";
+                btn.disabled = false;
+            } else {
+                alert("Statement Generated Successfully!");
+                window.location.href = 'billing.html';
+            }
+        }
+
+        // Run when page opens
+        document.addEventListener('DOMContentLoaded', loadProjectOptions);
+    </script>
+</body>
+</html>

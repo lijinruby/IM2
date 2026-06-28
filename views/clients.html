@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clients — ALEK</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- 1. Include Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="shell">
+    <div class="sidebar">
+        <div class="brand"><div class="brand-mark">A</div><div class="brand-name">ALEK Consultants</div></div>
+        <div class="nav">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="clients.html" class="nav-item active">Clients</a>
+            <a href="projects.html" class="nav-item">Projects</a>
+            <a href="billing.html" class="nav-item">Billing Statements</a>
+            <a href="payments.html" class="nav-item">Payments</a>
+        </div>
+        <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="#" onclick="logout()" style="color: white; font-size: 12px; text-decoration: none;">Logout</a>
+        </div>
+    </div>
+    <div class="main">
+        <div class="topbar"><h1>Clients</h1></div>
+        <div class="page">
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Registered Clients</h3>
+                    <!-- Only show Add Client button for Admins -->
+                    <button class="btn btn-primary" data-role="admin">+ Add Client</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Account Manager</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <!-- 2. Target ID for Dynamic Data -->
+                    <tbody id="clients-list">
+                        <tr><td colspan="4" style="text-align:center">Loading clients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Include Auth Script -->
+<script src="../assets/js/auth.js"></script>
+
+<script>
+    async function loadClients() {
+        // Fetch clients and join with profiles to get the Account Manager's name
+        const { data: clients, error } = await supabase
+            .from('clients')
+            .select(`
+                id,
+                name,
+                contact_number,
+                profiles ( full_name )
+            `);
+
+        if (error) {
+            console.error("Error loading clients:", error);
+            return;
+        }
+
+        const list = document.getElementById('clients-list');
+        list.innerHTML = ''; // Clear loading row
+
+        if (clients.length === 0) {
+            list.innerHTML = '<tr><td colspan="4" style="text-align:center">No clients registered.</td></tr>';
+            return;
+        }
+
+        clients.forEach(client => {
+            // If the manager is not assigned yet, show 'Unassigned'
+            const managerName = client.profiles ? client.profiles.full_name : 'Unassigned';
+            
+            list.innerHTML += `
+                <tr>
+                    <td>CLI-${client.id.toString().slice(0, 4).toUpperCase()}</td>
+                    <td><strong>${client.name}</strong></td>
+                    <td>${managerName}</td>
+                    <td>${client.contact_number || 'N/A'}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Load data when page opens
+    document.addEventListener('DOMContentLoaded', loadClients);
+</script>
+</body>
+</html>

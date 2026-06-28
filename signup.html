@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up — ALEK Consultants</title>
+    
+    <!-- 1. Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- 2. Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <!-- Brand Logo -->
+            <div class="brand-mark" style="margin: 0 auto 12px;">A</div>
+            <h2 style="text-align:center; margin-bottom: 8px;">Create Account</h2>
+            <p style="text-align:center; font-size:13px; color:var(--ink-soft); margin-bottom:24px;">
+                Register for system access
+            </p>
+
+            <!-- Message Box for feedback -->
+            <div id="auth-message" class="auth-message"></div>
+
+            <!-- Name Field -->
+            <div class="field">
+                <label for="signup-name">FULL NAME</label>
+                <input type="text" id="signup-name" placeholder="John Doe" required>
+            </div>
+
+            <!-- Role Selection -->
+            <div class="field">
+                <label for="signup-role">SYSTEM ROLE</label>
+                <select id="signup-role">
+                    <option value="client">Client / Partner</option>
+                    <option value="pm">Project Manager</option>
+                    <option value="admin">Finance Administration (Admin)</option>
+                </select>
+            </div>
+
+            <!-- Email Field -->
+            <div class="field">
+                <label for="signup-email">EMAIL ADDRESS</label>
+                <input type="email" id="signup-email" placeholder="name@company.com" required>
+            </div>
+
+            <!-- Password Field -->
+            <div class="field">
+                <label for="signup-password">PASSWORD</label>
+                <input type="password" id="signup-password" placeholder="Min. 6 characters" required>
+            </div>
+
+            <!-- Register Button -->
+            <button onclick="signUp()" class="btn btn-amber" style="width:100%; margin-top: 10px; justify-content: center;">
+                Register Account
+            </button>
+
+            <!-- Back to Login Link -->
+            <p style="text-align:center; font-size:13px; margin-top:24px; color: var(--ink-soft);">
+                Already have an account? <a href="index.html" style="color:var(--navy); font-weight:600; text-decoration: none;">Sign In</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- 3. Logic Script -->
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>

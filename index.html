@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — ALEK Consultants</title>
+    
+    <!-- 1. Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- 2. Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <!-- Brand Logo -->
+            <div class="brand-mark" style="margin: 0 auto 12px;">A</div>
+            <h2 style="text-align:center; margin-bottom: 8px;">Portal Sign In</h2>
+            <p style="text-align:center; font-size:13px; color:var(--ink-soft); margin-bottom:24px;">
+                Internal Billing & Monitoring System
+            </p>
+
+            <!-- Message Box for feedback (Errors/Success) -->
+            <div id="auth-message" class="auth-message"></div>
+
+            <!-- Email Field -->
+            <div class="field">
+                <label for="email-input">EMAIL ADDRESS</label>
+                <input type="email" id="email-input" placeholder="name@company.com" required>
+            </div>
+
+            <!-- Password Field -->
+            <div class="field">
+                <label for="password-input">PASSWORD</label>
+                <input type="password" id="password-input" placeholder="••••••••" required>
+            </div>
+
+            <!-- Login Button -->
+            <button onclick="login()" class="btn btn-primary" style="width:100%; margin-top: 10px; justify-content: center;">
+                Enter Portal
+            </button>
+
+            <!-- Register Link -->
+            <p style="text-align:center; font-size:13px; margin-top:24px; color: var(--ink-soft);">
+                Need access? <a href="signup.html" style="color:var(--amber); font-weight:600; text-decoration: none;">Request Account</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- 3. Logic Script -->
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>

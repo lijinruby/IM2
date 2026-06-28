@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Projects — ALEK</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- 1. Include Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="shell">
+        <div class="sidebar">
+            <div class="brand"><div class="brand-mark">A</div><div>ALEK Consultants</div></div>
+            <div class="nav">
+                <a href="dashboard.html" class="nav-item">Dashboard</a>
+                <a href="clients.html" class="nav-item" data-role="admin">Clients</a>
+                <a href="projects.html" class="nav-item active">Projects</a>
+                <a href="billing.html" class="nav-item">Billing</a>
+                <a href="payments.html" class="nav-item" data-role="admin">Payments</a>
+            </div>
+            <div style="padding:20px; border-top:1px solid rgba(255,255,255,0.1)">
+                <a href="#" onclick="logout()" style="color:white; font-size:12px; text-decoration:none">Logout</a>
+            </div>
+        </div>
+        <div class="main">
+            <div class="topbar"><h1>Project Management</h1></div>
+            <div class="page">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Active Projects</h3>
+                        <!-- Only Admins can see the New Project button -->
+                        <button class="btn btn-primary" data-role="admin">+ New Project</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Project Name</th>
+                                <th>Client</th>
+                                <th>Contract Amount</th>
+                            </tr>
+                        </thead>
+                        <!-- 2. Target ID for dynamic rows -->
+                        <tbody id="projects-list">
+                            <tr><td colspan="4" style="text-align:center">Loading projects...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Link to your auth.js -->
+    <script src="../assets/js/auth.js"></script>
+
+    <script>
+        async function loadProjects() {
+            // Fetch projects and join with 'clients' table to get the name
+            const { data: projects, error } = await supabase
+                .from('projects')
+                .select(`
+                    id,
+                    name,
+                    contract_amount,
+                    clients ( name )
+                `);
+
+            if (error) {
+                console.error("Error loading projects:", error);
+                return;
+            }
+
+            const list = document.getElementById('projects-list');
+            list.innerHTML = ''; // Clear loading row
+
+            if (projects.length === 0) {
+                list.innerHTML = '<tr><td colspan="4" style="text-align:center">No projects found.</td></tr>';
+                return;
+            }
+
+            const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+            projects.forEach(proj => {
+                // Get client name from the joined 'clients' object
+                const clientName = proj.clients ? proj.clients.name : 'Unknown Client';
+                
+                list.innerHTML += `
+                    <tr>
+                        <td>PRJ-${proj.id.toString().slice(0, 4).toUpperCase()}</td>
+                        <td><strong>${proj.name}</strong></td>
+                        <td>${clientName}</td>
+                        <td>${php.format(proj.contract_amount)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Run when page loads
+        document.addEventListener('DOMContentLoaded', loadProjects);
+    </script>
+</body>
+</html>

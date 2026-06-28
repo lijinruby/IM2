@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payments — ALEK</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <!-- 1. Include Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="shell">
+    <div class="sidebar">
+        <div class="brand"><div class="brand-mark">A</div><div class="brand-name">ALEK Consultants</div></div>
+        <div class="nav">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="clients.html" class="nav-item" data-role="admin">Clients</a>
+            <a href="projects.html" class="nav-item">Projects</a>
+            <a href="billing.html" class="nav-item">Billing Statements</a>
+            <a href="payments.html" class="nav-item active" data-role="admin">Payments</a>
+        </div>
+        <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="#" onclick="logout()" style="color: white; font-size: 12px; text-decoration: none;">Logout</a>
+        </div>
+    </div>
+    <div class="main">
+        <div class="topbar"><h1>Payments</h1></div>
+        <div class="page">
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Received Payments</h3>
+                    <button class="btn btn-amber" data-role="admin">+ Record Payment</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pay Code</th>
+                            <th>Statement Ref</th>
+                            <th>Date Received</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <!-- 2. Target ID for Dynamic Data -->
+                    <tbody id="payments-list">
+                        <tr><td colspan="4" style="text-align:center">Loading payments...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../assets/js/auth.js"></script>
+
+<script>
+    async function loadPayments() {
+        // Fetch payments and join with billing to get the ID/Reference
+        const { data: payments, error } = await supabase
+            .from('payments')
+            .select(`
+                id,
+                amount_paid,
+                payment_date,
+                billing_id
+            `);
+
+        if (error) {
+            console.error("Error loading payments:", error);
+            return;
+        }
+
+        const list = document.getElementById('payments-list');
+        list.innerHTML = ''; // Clear loading row
+
+        if (payments.length === 0) {
+            list.innerHTML = '<tr><td colspan="4" style="text-align:center">No payments recorded yet.</td></tr>';
+            return;
+        }
+
+        const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        payments.forEach(pay => {
+            const date = new Date(pay.payment_date).toLocaleDateString();
+            
+            list.innerHTML += `
+                <tr>
+                    <td>PAY-${pay.id.toString().slice(0, 4).toUpperCase()}</td>
+                    <td>BS-${pay.billing_id.toString().slice(0, 5).toUpperCase()}</td>
+                    <td>${date}</td>
+                    <td>${php.format(pay.amount_paid)}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Load data when page opens
+    document.addEventListener('DOMContentLoaded', loadPayments);
+</script>
+</body>
+</html>
