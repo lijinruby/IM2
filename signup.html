@@ -3,69 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up — ALEK Consultants</title>
-    
-    <!-- 1. Custom CSS -->
+    <title>Create Account — ALEK Consultants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
-    
-    <!-- 2. Supabase Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="auth-bg">
 
-    <div class="auth-wrapper">
-        <div class="auth-card">
-            <!-- Brand Logo -->
-            <div class="brand-mark" style="margin: 0 auto 12px;">A</div>
-            <h2 style="text-align:center; margin-bottom: 8px;">Create Account</h2>
-            <p style="text-align:center; font-size:13px; color:var(--ink-soft); margin-bottom:24px;">
-                Register for system access
-            </p>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
 
-            <!-- Message Box for feedback -->
-            <div id="auth-message" class="auth-message"></div>
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                    <div style="height: 5px; background: var(--amber);"></div>
 
-            <!-- Name Field -->
-            <div class="field">
-                <label for="signup-name">FULL NAME</label>
-                <input type="text" id="signup-name" placeholder="John Doe" required>
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <div class="brand-logo mx-auto mb-3" style="width:45px; height:45px; font-size: 22px;">A</div>
+                            <h4 class="fw-bold text-dark">Create Account</h4>
+                            <p class="text-muted small">Register for internal system access</p>
+                        </div>
+
+                        <div id="auth-message" class="alert d-none mb-4" role="alert"></div>
+
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="signup-name" placeholder="John Doe" required>
+                            <label for="signup-name"><i class="fa-regular fa-user me-2"></i>Full Name</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <!-- FIX: "Finance Admin" removed from public signup. Anyone could previously
+                                 self-register as an admin with full access to every client's billing data.
+                                 Admin accounts must now be promoted manually (see schema.sql, section 5). -->
+                            <select class="form-select" id="signup-role">
+                                <option value="client" selected>Client / Partner</option>
+                                <option value="pm">Project Manager</option>
+                            </select>
+                            <label for="signup-role"><i class="fa-solid fa-user-shield me-2"></i>System Role</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="signup-email" placeholder="name@company.com" required>
+                            <label for="signup-email"><i class="fa-regular fa-envelope me-2"></i>Email Address</label>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <input type="password" class="form-control" id="signup-password" placeholder="Password" required>
+                            <label for="signup-password"><i class="fa-solid fa-lock me-2"></i>Password</label>
+                        </div>
+
+                        <button onclick="signUp()" id="signupBtn" class="btn btn-amber w-100 py-3 fw-bold rounded-3">
+                            Register Account <i class="fa-solid fa-chevron-right ms-2"></i>
+                        </button>
+
+                        <div class="text-center mt-4">
+                            <p class="small text-muted">
+                                Already have an account?
+                                <a href="index.html" class="text-navy fw-bold text-decoration-none" style="color: var(--navy)">Sign In</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-center text-white-50 mt-4 small">
+                    &copy; 2026 ALEK Consultants. All rights reserved.
+                </p>
+
             </div>
-
-            <!-- Role Selection -->
-            <div class="field">
-                <label for="signup-role">SYSTEM ROLE</label>
-                <select id="signup-role">
-                    <option value="client">Client / Partner</option>
-                    <option value="pm">Project Manager</option>
-                    <option value="admin">Finance Administration (Admin)</option>
-                </select>
-            </div>
-
-            <!-- Email Field -->
-            <div class="field">
-                <label for="signup-email">EMAIL ADDRESS</label>
-                <input type="email" id="signup-email" placeholder="name@company.com" required>
-            </div>
-
-            <!-- Password Field -->
-            <div class="field">
-                <label for="signup-password">PASSWORD</label>
-                <input type="password" id="signup-password" placeholder="Min. 6 characters" required>
-            </div>
-
-            <!-- Register Button -->
-            <button onclick="signUp()" class="btn btn-amber" style="width:100%; margin-top: 10px; justify-content: center;">
-                Register Account
-            </button>
-
-            <!-- Back to Login Link -->
-            <p style="text-align:center; font-size:13px; margin-top:24px; color: var(--ink-soft);">
-                Already have an account? <a href="index.html" style="color:var(--navy); font-weight:600; text-decoration: none;">Sign In</a>
-            </p>
         </div>
     </div>
 
-    <!-- 3. Logic Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/auth.js"></script>
 </body>
 </html>

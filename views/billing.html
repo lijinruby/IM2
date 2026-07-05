@@ -2,112 +2,239 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Billing — ALEK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing History — ALEK Consultants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
-    <!-- 1. Include Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="role-loading">
     <div class="shell">
-        <div class="sidebar">
-            <div class="brand"><div class="brand-mark">A</div><div>ALEK Consultants</div></div>
-            <div class="nav">
-                <a href="dashboard.html" class="nav-item">Dashboard</a>
-                <a href="clients.html" class="nav-item" data-role="admin">Clients</a>
-                <a href="projects.html" class="nav-item" data-role="admin">Projects</a>
-                <a href="projects.html" class="nav-item" data-role="pm">My Projects</a>
-                <a href="billing.html" class="nav-item active">Billing</a>
-                <a href="payments.html" class="nav-item" data-role="admin">Payments</a>
+        <nav class="sidebar shadow" id="sidebar">
+            <div class="p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
+                <div class="brand-mark ms-1">A</div>
+                <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
-            <div style="padding:20px; border-top:1px solid rgba(255,255,255,0.1)">
-                <a href="#" onclick="logout()" style="color:white; font-size:12px; text-decoration:none">Logout</a>
+            <div class="mt-4 flex-grow-1">
+                <a href="dashboard.html" class="nav-item-custom"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="clients.html" class="nav-item-custom" data-role="admin"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="billing.html" class="nav-item-custom active"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
             </div>
-        </div>
-        <div class="main">
-            <div class="topbar"><h1>Billing Statements</h1></div>
-            <div class="page">
-                <div class="panel">
-                    <div class="panel-head">
-                        <h3>Recent Statements</h3>
-                        <a href="new-billing.html" class="btn btn-primary" data-role="admin">+ New Statement</a>
-                        <a href="new-billing.html" class="btn btn-primary" data-role="pm">+ Request Billing</a>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>No.</th>
-                                <th>Project</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <!-- 2. Added ID 'billing-table' to the tbody -->
-                        <tbody id="billing-table">
-                            <tr><td colspan="5" style="text-align:center">Loading statements...</td></tr>
-                        </tbody>
-                    </table>
+            <div class="p-3 border-top border-white border-opacity-10">
+                <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <header class="topbar px-4">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
+                    <h6 class="mb-0 fw-bold">Billing & Invoices</h6>
                 </div>
-            </div>
+                <div class="badge rounded-pill bg-success px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+            </header>
+
+            <main class="p-4 container-fluid">
+                <div class="welcome-header shadow-sm border-0">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="fw-bold mb-2">Statement History</h2>
+                            <p class="opacity-75 mb-4">Review and download your project invoices and payment records.</p>
+                            <div class="d-flex gap-2">
+                                <a href="new-billing.html" class="btn btn-amber shadow-sm" data-role="admin"><i class="bi bi-plus-lg me-2"></i> New Statement</a>
+                                <a href="new-billing.html" class="btn btn-amber shadow-sm" data-role="pm"><i class="bi bi-send me-2"></i> Request Billing</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-5">
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-danger-subtle text-danger"><i class="bi bi-clock-history"></i></div>
+                                <div>
+                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Outstanding</small>
+                                    <h3 class="fw-bold mb-0" id="billing-outstanding">₱0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-wallet2"></i></div>
+                                <div>
+                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Paid</small>
+                                    <h3 class="fw-bold mb-0" id="billing-paid">₱0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-info-subtle text-info"><i class="bi bi-receipt"></i></div>
+                                <div>
+                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Statements</small>
+                                    <h3 class="fw-bold mb-0" id="billing-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-9">
+                        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-0">Invoice List</h6>
+                                <button class="btn btn-sm btn-light border" onclick="loadBilling()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light">
+                                        <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
+                                            <th class="ps-4">No.</th>
+                                            <th>Project</th>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="text-end pe-4">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="billing-table">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5">
+                                                <div class="spinner-border text-primary spinner-border-sm me-2"></div>
+                                                <span class="text-muted">Loading statements...</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm p-4 text-white h-100" style="border-radius: 16px; background-color: var(--navy);">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Payment Details</h6>
+                            <p class="small opacity-75 mb-4">Please include the <strong>Ref No.</strong> in your bank transfer notes.</p>
+                            <div class="bg-white bg-opacity-10 p-3 rounded small mb-4">
+                                <strong>BPI Savings</strong><br>
+                                ALEK Consultants Inc.<br>
+                                <span class="user-select-all">0012-3456-78</span>
+                            </div>
+                            <button class="btn btn-amber w-100 btn-sm" onclick="alert('Thanks — an administrator will verify your transfer and mark the statement as paid.')">Report Payment</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 
     <script src="../assets/js/auth.js"></script>
-    
-    <!-- 3. Script to fetch data from Supabase -->
     <script>
+        const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
         async function loadBilling() {
-            // Fetch data from 'billing' and join with 'projects' to get the project name
-            const { data: bills, error } = await supabase
-                .from('billing')
-                .select(`
-                    id,
-                    amount,
-                    status,
-                    created_at,
-                    projects ( name )
-                `);
-
-            if (error) {
-                console.error("Error fetching billing:", error);
-                return;
-            }
-
             const tableBody = document.getElementById('billing-table');
-            tableBody.innerHTML = ''; // Clear the loading message
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
 
-            if (bills.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center">No billing statements found.</td></tr>';
-                return;
+                const role = localStorage.getItem('userRole') || 'client';
+
+                // FIX: `.eq('projects.client_id', ...)` on a left-joined embed does NOT
+                // filter the parent rows in PostgREST — you need `!inner` on the embed
+                // for the filter to actually restrict which billing rows come back.
+                let query = supabase
+                    .from('billing')
+                    .select('*, projects!inner ( name, client_id )');
+
+                if (role === 'client') {
+                    const { data: profile } = await supabase.from('profiles').select('client_id').eq('id', user.id).single();
+                    if (profile?.client_id) {
+                        query = query.eq('projects.client_id', profile.client_id);
+                    } else {
+                        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">Client profile not found.</td></tr>';
+                        return;
+                    }
+                }
+
+                const { data: bills, error } = await query.order('created_at', { ascending: false });
+                if (error) throw error;
+
+                window.currentRole = role;
+                tableBody.innerHTML = '';
+                let totalPaid = 0, totalDue = 0;
+
+                if (!bills || bills.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No billing records found.</td></tr>';
+                    document.getElementById('billing-outstanding').innerText = php.format(0);
+                    document.getElementById('billing-paid').innerText = php.format(0);
+                    document.getElementById('billing-count').innerText = 0;
+                    return;
+                }
+
+                bills.forEach(bill => {
+                    const amt = parseFloat(bill.amount) || 0;
+                    const isPaid = bill.status.toLowerCase() === 'paid';
+
+                    if (isPaid) totalPaid += amt;
+                    else totalDue += amt;
+
+                    const badgeClass = isPaid ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning';
+
+                    // Finance Admin manages billing data directly (create, mark paid/void);
+                    // everyone else gets a read-only status badge.
+                    const statusCell = window.currentRole === 'admin'
+                        ? `<select class="form-select form-select-sm" style="width:120px; margin:0 auto;" onchange="updateBillingStatus('${bill.id}', this.value)">
+                                <option value="unpaid" ${bill.status === 'unpaid' ? 'selected' : ''}>UNPAID</option>
+                                <option value="paid" ${bill.status === 'paid' ? 'selected' : ''}>PAID</option>
+                                <option value="void" ${bill.status === 'void' ? 'selected' : ''}>VOID</option>
+                           </select>`
+                        : `<span class="badge rounded-pill ${badgeClass} px-3 py-2">${bill.status.toUpperCase()}</span>`;
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="ps-4 fw-bold text-navy">BS-${bill.id.toString().slice(0,5).toUpperCase()}</td>
+                            <td class="fw-semibold">${bill.projects ? bill.projects.name : 'Unknown Project'}</td>
+                            <td>${new Date(bill.created_at).toLocaleDateString()}</td>
+                            <td class="fw-bold">${php.format(amt)}</td>
+                            <td class="text-center">${statusCell}</td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-light btn-sm border" title="Download PDF" onclick="alert('PDF export is not implemented yet.')">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+
+                document.getElementById('billing-outstanding').innerText = php.format(totalDue);
+                document.getElementById('billing-paid').innerText = php.format(totalPaid);
+                document.getElementById('billing-count').innerText = bills.length;
+
+            } catch (err) {
+                console.error("Error fetching billing:", err);
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger small">Error connecting to server.</td></tr>`;
             }
-
-            bills.forEach(bill => {
-                // Formatting Date
-                const date = new Date(bill.created_at).toLocaleDateString();
-                
-                // Formatting Amount to PHP
-                const formattedAmount = new Intl.NumberFormat('en-PH', {
-                    style: 'currency',
-                    currency: 'PHP'
-                }).format(bill.amount);
-
-                // Determining Pill Color based on status
-                const statusClass = bill.status.toLowerCase() === 'paid' ? 'green' : 'amber';
-
-                tableBody.innerHTML += `
-                    <tr>
-                        <td>BS-${bill.id.toString().slice(0, 5).toUpperCase()}</td>
-                        <td>${bill.projects ? bill.projects.name : 'Unknown Project'}</td>
-                        <td>${date}</td>
-                        <td>${formattedAmount}</td>
-                        <td><span class="pill ${statusClass}">${bill.status}</span></td>
-                    </tr>
-                `;
-            });
         }
 
-        // Run this when the page loads
+        async function updateBillingStatus(billId, newStatus) {
+            const { error } = await supabase.from('billing').update({ status: newStatus }).eq('id', billId);
+            if (error) {
+                alert("Error updating statement: " + error.message);
+                return;
+            }
+            loadBilling(); // refresh KPI totals to reflect the change
+        }
+
         document.addEventListener('DOMContentLoaded', loadBilling);
+        // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
     </script>
 </body>
 </html>

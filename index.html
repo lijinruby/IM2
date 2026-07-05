@@ -2,54 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — ALEK Consultants</title>
-    
-    <!-- 1. Custom CSS -->
+    <title>Portal Login — ALEK</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
-    
-    <!-- 2. Supabase Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="auth-bg">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-lg p-4 rounded-4" style="position:relative;">
+                    <div style="height: 4px; background: var(--amber); width: 100%; position: absolute; top: 0; left: 0; border-radius: 4px 4px 0 0;"></div>
 
-    <div class="auth-wrapper">
-        <div class="auth-card">
-            <!-- Brand Logo -->
-            <div class="brand-mark" style="margin: 0 auto 12px;">A</div>
-            <h2 style="text-align:center; margin-bottom: 8px;">Portal Sign In</h2>
-            <p style="text-align:center; font-size:13px; color:var(--ink-soft); margin-bottom:24px;">
-                Internal Billing & Monitoring System
-            </p>
+                    <div class="text-center mb-4 mt-2">
+                        <div class="brand-logo mx-auto mb-3" style="width:45px; height:45px; font-size: 22px;">A</div>
+                        <h4 class="fw-bold">Consultant Portal</h4>
+                        <p class="text-muted small">Enter your credentials to manage billings</p>
+                    </div>
 
-            <!-- Message Box for feedback (Errors/Success) -->
-            <div id="auth-message" class="auth-message"></div>
+                    <div id="auth-message" class="alert d-none"></div>
 
-            <!-- Email Field -->
-            <div class="field">
-                <label for="email-input">EMAIL ADDRESS</label>
-                <input type="email" id="email-input" placeholder="name@company.com" required>
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="email-input" placeholder="name@example.com">
+                        <label for="email-input">Email address</label>
+                    </div>
+                    <div class="form-floating mb-4">
+                        <input type="password" class="form-control" id="password-input" placeholder="Password">
+                        <label for="password-input">Password</label>
+                    </div>
+
+                    <button onclick="login()" id="loginBtn" class="btn btn-amber w-100 py-3 fw-bold rounded-3">
+                        Sign In <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+
+                    <div class="text-center mt-4">
+                        <a href="signup.html" class="text-decoration-none small text-muted">Request system access →</a>
+                    </div>
+                </div>
             </div>
-
-            <!-- Password Field -->
-            <div class="field">
-                <label for="password-input">PASSWORD</label>
-                <input type="password" id="password-input" placeholder="••••••••" required>
-            </div>
-
-            <!-- Login Button -->
-            <button onclick="login()" class="btn btn-primary" style="width:100%; margin-top: 10px; justify-content: center;">
-                Enter Portal
-            </button>
-
-            <!-- Register Link -->
-            <p style="text-align:center; font-size:13px; margin-top:24px; color: var(--ink-soft);">
-                Need access? <a href="signup.html" style="color:var(--amber); font-weight:600; text-decoration: none;">Request Account</a>
-            </p>
         </div>
     </div>
-
-    <!-- 3. Logic Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/auth.js"></script>
 </body>
 </html>

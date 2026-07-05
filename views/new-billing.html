@@ -2,118 +2,155 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Create Bill — ALEK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Statement — ALEK Consultants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
-    <!-- 1. Include Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="role-loading">
     <div class="shell">
-        <div class="sidebar">
-            <div class="brand"><div class="brand-mark">A</div><div>ALEK Consultants</div></div>
-            <div class="nav">
-                <a href="dashboard.html" class="nav-item">Dashboard</a>
-                <a href="billing.html" class="nav-item active">Billing</a>
+        <nav class="sidebar shadow" id="sidebar">
+            <div class="p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
+                <div class="brand-mark ms-1">A</div>
+                <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
-        </div>
-        <div class="main">
-            <div class="topbar"><h1>Generate Statement</h1></div>
-            <div class="page">
-                <div class="panel" style="max-width: 600px; margin: 0 auto;">
-                    <div style="padding:30px">
-                        <!-- 2. Added ID to Select -->
-                        <div class="field">
-                            <label>Project</label>
-                            <select id="project-select">
-                                <option value="">Loading projects...</option>
-                            </select>
-                        </div>
-                        
-                        <!-- 3. Added IDs to Inputs -->
-                        <div class="field">
-                            <label>Amount (PHP)</label>
-                            <input type="number" id="bill-amount" placeholder="0.00">
-                        </div>
-                        
-                        <div class="field">
-                            <label>Billing Milestone / Reason</label>
-                            <textarea id="bill-reason" rows="4" placeholder="e.g. 50% Completion of DIA Study"></textarea>
-                        </div>
-                        
-                        <div style="display:flex; gap:10px; margin-top:20px">
-                            <!-- 4. Changed onclick to call our function -->
-                            <button onclick="createBill()" id="submit-btn" class="btn btn-primary">Create Statement</button>
-                            <a href="billing.html" class="btn" style="background:#eee">Cancel</a>
+            <div class="mt-4 flex-grow-1">
+                <a href="dashboard.html" class="nav-item-custom"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="clients.html" class="nav-item-custom" data-role="admin"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="billing.html" class="nav-item-custom active"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+            </div>
+            <div class="p-3 border-top border-white border-opacity-10">
+                <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <header class="topbar px-4">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
+                    <h6 class="mb-0 fw-bold">Generate Statement</h6>
+                </div>
+                <div class="badge rounded-pill bg-success px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+            </header>
+
+            <main class="p-4 container-fluid">
+                <div class="welcome-header shadow-sm border-0 mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="fw-bold mb-2">Create New Billing</h2>
+                            <p class="opacity-75 mb-0">Issue a new financial statement for a specific project milestone.</p>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-4 p-lg-5" style="border-radius: 16px;">
+                            <h5 class="fw-bold mb-4 text-navy">Invoice Details</h5>
+
+                            <div class="form-floating mb-3">
+                                <select class="form-select" id="project-select">
+                                    <option value="">Loading projects...</option>
+                                </select>
+                                <label for="project-select">Select Project</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input type="number" class="form-control" id="bill-amount" placeholder="0.00">
+                                <label for="bill-amount">Amount (PHP)</label>
+                            </div>
+
+                            <div class="form-floating mb-4">
+                                <textarea class="form-control" id="bill-reason" placeholder="Details" style="height: 120px"></textarea>
+                                <label for="bill-reason">Billing Milestone / Description</label>
+                            </div>
+
+                            <div class="d-flex gap-3 mt-2">
+                                <button onclick="createBill()" id="submit-btn" class="btn btn-amber py-3 flex-grow-1 shadow-sm">
+                                    Create Statement
+                                </button>
+                                <a href="billing.html" class="btn btn-light py-3 border px-4">Cancel</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 
     <script src="../assets/js/auth.js"></script>
-
     <script>
-        // STEP 1: Fill the dropdown with real projects
+        // Populate projects dropdown. Note: RLS already limits a PM to their own
+        // projects here, so no extra client-side filtering is required.
         async function loadProjectOptions() {
-            const { data: projects, error } = await supabase
-                .from('projects')
-                .select('id, name');
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
 
-            if (error) {
-                console.error("Error loading projects:", error);
-                return;
+                const { data: projects, error } = await supabase
+                    .from('projects')
+                    .select('id, name');
+
+                if (error) throw error;
+
+                const select = document.getElementById('project-select');
+                select.innerHTML = '<option value="" selected disabled>-- Choose a Project --</option>';
+
+                (projects || []).forEach(proj => {
+                    const option = document.createElement('option');
+                    option.value = proj.id;
+                    option.textContent = proj.name;
+                    select.appendChild(option);
+                });
+
+            } catch (err) {
+                console.error("Error loading projects:", err);
             }
-
-            const select = document.getElementById('project-select');
-            select.innerHTML = '<option value="">-- Select a Project --</option>';
-
-            projects.forEach(proj => {
-                const option = document.createElement('option');
-                option.value = proj.id;
-                option.textContent = proj.name;
-                select.appendChild(option);
-            });
         }
 
-        // STEP 2: Save the bill to Supabase
         async function createBill() {
             const projectId = document.getElementById('project-select').value;
             const amount = document.getElementById('bill-amount').value;
-            const reason = document.getElementById('bill-reason').value; // In a real app, you might add a 'description' column to your table
+            const reason = document.getElementById('bill-reason').value;
 
             if (!projectId || !amount) {
-                alert("Please select a project and enter an amount.");
+                alert("Please provide both a project and an amount.");
                 return;
             }
 
-            // Disable button to prevent double-clicks
             const btn = document.getElementById('submit-btn');
-            btn.innerText = "Processing...";
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div> Processing...';
             btn.disabled = true;
 
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('billing')
                 .insert([
-                    { 
-                        project_id: projectId, 
+                    {
+                        project_id: projectId,
                         amount: parseFloat(amount),
-                        status: 'Unpaid' // Default status
+                        description: reason || null,
+                        status: 'unpaid'
                     }
                 ]);
 
             if (error) {
-                alert("Error creating bill: " + error.message);
-                btn.innerText = "Create Statement";
+                alert("Error: " + error.message);
+                btn.innerHTML = originalText;
                 btn.disabled = false;
             } else {
-                alert("Statement Generated Successfully!");
+                alert("Statement Created Successfully!");
                 window.location.href = 'billing.html';
             }
         }
 
-        // Run when page opens
         document.addEventListener('DOMContentLoaded', loadProjectOptions);
+        // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
     </script>
 </body>
 </html>
+

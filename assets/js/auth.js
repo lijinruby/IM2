@@ -1,24 +1,78 @@
+/**
+ * ALEK Consultants - Core Auth & UI Logic
+ * Dependencies: Supabase JS, Bootstrap 5 (CSS), FontAwesome/Bootstrap Icons
+ */
+
+// 1. Supabase Configuration
 const supabaseUrl = 'https://pmcyfsghrdzdrgummljv.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtY3lmc2docmR6ZHJndW1tbGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NDI4NjgsImV4cCI6MjA5ODIxODg2OH0.nt3qrcvHUjPZH3fmKFGEj1WNBYs28nFPJ9FWeh8F5SI';
+
+// FIX: `supabase` (from the CDN script tag) is the *library*, not a client.
+// Every page's inline script was calling supabase.auth.getUser() / supabase.from(...)
+// on that library object, which has no .auth or .from — every DB call was failing.
+// We create the real client, then overwrite the global `supabase` with it so every
+// page's existing `supabase.from(...)` calls work without editing every file.
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+window.supabase = _supabase;
 
 /**
- * Helper to show on-page messages
- * @param {string} text - The message to show
- * @param {string} type - 'error', 'success', or 'info'
+ * 2. UI Helper Functions
  */
-function showMessage(text, type = 'error') {
+
+// Display labels for each role, matching the actual job function:
+//   admin  -> Finance Admin  (billing statements, payments, billing data)
+//   pm     -> Project Manager (creates/updates project records, tracks status)
+//   client -> Client         (read-only: own billing + payment history)
+const ROLE_LABELS = { admin: 'Finance Admin', pm: 'Project Manager', client: 'Client' };
+function roleLabel(role) {
+    return ROLE_LABELS[role] || role;
+}
+function showMessage(text, type = 'danger') {
     const msgBox = document.getElementById('auth-message');
     if (!msgBox) return;
 
     msgBox.innerText = text;
-    msgBox.className = `auth-message ${type}`;
+    const alertClass = type === 'error' ? 'danger' : type;
+    msgBox.className = `alert alert-${alertClass} d-block animated fadeIn`;
+
+    if (type === 'success') {
+        setTimeout(() => { msgBox.className = 'd-none'; }, 5000);
+    }
 }
 
+/**
+ * 3. Sidebar Logic
+ * FIX: pages used to ALSO attach their own click listener on #sidebarToggle,
+ * so one click fired two toggles and visually cancelled itself out.
+ * This is now the ONLY place that wires up the toggle button.
+ */
+function initSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+
+    if (!sidebar || !toggleBtn) return;
+
+    const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    if (isCollapsed) sidebar.classList.add('collapsed');
+
+    toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+    });
+}
+
+/**
+ * 4. Authentication Logic
+ */
+
+// Protect pages from unauthorized access, and keep the role badge in sync
+// with the database (not just whatever was cached at login time).
 async function protectPage() {
     const { data: { user } } = await _supabase.auth.getUser();
     const path = window.location.pathname;
-    const isAuthPage = path.endsWith('index.html') || path.endsWith('signup.html') || path === '/' || path.endsWith('billing-monitoring/');
+
+    const isAuthPage = path.endsWith('index.html') || path.endsWith('signup.html') || path === '/' || path.includes('/billing-monitoring/index.html');
 
     if (!user && !isAuthPage) {
         const prefix = path.includes('views/') ? '../' : '';
@@ -31,76 +85,127 @@ async function protectPage() {
             window.location.href = 'views/dashboard.html';
             return;
         }
-        const role = localStorage.getItem('userRole') || 'client';
+
+        // Fetch the current role from the DB so a role change by an admin
+        // takes effect immediately instead of relying on a stale cached value.
+        let role = localStorage.getItem('userRole') || 'client';
+        const { data: profile } = await _supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role) {
+            role = profile.role;
+            localStorage.setItem('userRole', role);
+        }
+
+        document.body.classList.remove('role-loading', 'role-admin', 'role-pm', 'role-client');
         document.body.classList.add('role-' + role);
+
         const userTag = document.getElementById('userTag');
-        if (userTag) userTag.innerText = role.toUpperCase();
+        if (userTag) {
+            userTag.innerText = roleLabel(role).toUpperCase();
+            if (role === 'admin') userTag.className = "badge rounded-pill bg-danger";
+            else if (role === 'pm') userTag.className = "badge rounded-pill bg-primary";
+            else userTag.className = "badge rounded-pill bg-success";
+        }
+
+        const roleBadge = document.getElementById('userRoleBadge');
+        if (roleBadge) roleBadge.innerText = roleLabel(role);
     }
 }
 
+// Login Process
 async function login() {
     const email = document.getElementById('email-input').value;
     const password = document.getElementById('password-input').value;
-    const btn = document.querySelector('button');
+    const btn = document.querySelector('button[onclick="login()"]');
 
     if (!email || !password) {
-        showMessage("Please enter your email and password.");
+        showMessage("Please enter both email and password.", "warning");
         return;
     }
 
-    btn.innerText = "Authenticating...";
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Authenticating...`;
     btn.disabled = true;
 
     const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
 
-    if (error) { 
-        showMessage(error.message, "error"); 
-        btn.innerText = "Enter Portal";
+    if (error) {
+        showMessage(error.message, "danger");
+        btn.innerHTML = originalText;
         btn.disabled = false;
-        return; 
+        return;
     }
 
-    const { data: profile } = await _supabase.from('profiles').select('role').eq('id', data.user.id).single();
+    const { data: profile } = await _supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
     localStorage.setItem('userRole', profile?.role || 'client');
     window.location.href = 'views/dashboard.html';
 }
 
+// Signup Process
+// FIX: the role dropdown used to let anyone register as "Finance Admin".
+// The dropdown itself is now client/PM only (see signup.html), and the
+// database trigger (handle_new_user) also refuses to honor role: 'admin'
+// even if someone bypasses the UI and calls the API directly.
 async function signUp() {
     const fullName = document.getElementById('signup-name').value;
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
-    const role = document.getElementById('signup-role').value.toLowerCase();
+    const role = document.getElementById('signup-role').value;
+    const btn = document.querySelector('button[onclick="signUp()"]');
 
-    // 1. Perform the signup
+    if (!fullName || !email || !password) {
+        showMessage("Please fill in all fields.", "warning");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Creating Account...`;
+
     const { data, error } = await _supabase.auth.signUp({
-        email, 
+        email,
         password,
-        options: { 
-            data: { 
-                full_name: fullName, 
-                role: role 
-            } 
+        options: {
+            data: {
+                full_name: fullName,
+                role: role
+            }
         }
     });
 
-    if (error) { 
-        alert("Signup Error: " + error.message); 
-        return; 
+    if (error) {
+        showMessage(error.message, "danger");
+        btn.disabled = false;
+        btn.innerText = "Register Account";
+        return;
     }
 
-    // 2. FORCE SIGNOUT: This prevents the auto-login session
     await _supabase.auth.signOut();
-
-    // 3. Inform the user and redirect
-    alert("Account Created! You can now sign in.");
-    window.location.href = 'index.html'; // Redirect to your login page
+    alert("Account created successfully! Please sign in.");
+    window.location.href = 'index.html';
 }
 
+// Logout Process
 async function logout() {
     await _supabase.auth.signOut();
     localStorage.clear();
-    const prefix = window.location.pathname.includes('views/') ? '../' : '';
+    const path = window.location.pathname;
+    const prefix = path.includes('views/') ? '../' : '';
     window.location.href = prefix + 'index.html';
 }
 
-protectPage();
+/**
+ * 5. Initialization
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    protectPage();
+    initSidebar();
+});
