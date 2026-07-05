@@ -47,9 +47,12 @@
                             <label for="signup-email"><i class="fa-regular fa-envelope me-2"></i>Email Address</label>
                         </div>
 
-                        <div class="form-floating mb-4">
+                        <div class="form-floating mb-4 position-relative">
                             <input type="password" class="form-control" id="signup-password" placeholder="Password" required>
                             <label for="signup-password"><i class="fa-solid fa-lock me-2"></i>Password</label>
+                            <button id="toggleSignupPassword" class="btn btn-sm btn-light position-absolute" type="button" style="right:12px;top:10px;border:none;padding:6px;border-radius:8px;">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
                         </div>
 
                         <button onclick="signUp()" id="signupBtn" class="btn btn-amber w-100 py-3 fw-bold rounded-3">

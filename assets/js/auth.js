@@ -231,3 +231,52 @@ document.addEventListener('DOMContentLoaded', () => {
     protectPage();
     initSidebar();
 });
+
+// Password visibility toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById('togglePassword');
+    const pwd = document.getElementById('password-input');
+
+    if (toggle && pwd) {
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                toggle.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            } else {
+                pwd.type = 'password';
+                toggle.innerHTML = '<i class="bi bi-eye"></i>';
+            }
+        });
+    }
+});
+
+// Signup: toggle visibility and submit on Enter inside password field
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleS = document.getElementById('toggleSignupPassword');
+    const pwdS = document.getElementById('signup-password');
+    const signupBtn = document.querySelector('button[onclick="signUp()"]');
+
+    if (toggleS && pwdS) {
+        toggleS.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (pwdS.type === 'password') {
+                pwdS.type = 'text';
+                toggleS.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            } else {
+                pwdS.type = 'password';
+                toggleS.innerHTML = '<i class="bi bi-eye"></i>';
+            }
+        });
+    }
+
+    if (pwdS) {
+        pwdS.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (signupBtn) signupBtn.click();
+                else signUp();
+            }
+        });
+    }
+});
