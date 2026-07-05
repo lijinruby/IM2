@@ -54,11 +54,13 @@ body.role-client [data-role="client"] {
     color: white;
     display: flex;
     flex-direction: column;
+    /* Added transition for smooth movement */
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    overflow-x: hidden;
+    overflow-x: hidden; /* Added to hide text during collapse */
 }
 
+/* Collapsed Logic */
 .sidebar.collapsed {
     width: 75px;
 }
@@ -70,7 +72,7 @@ body.role-client [data-role="client"] {
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid var(--line);
-    white-space: nowrap;
+    white-space: nowrap; /* Added to keep text on one line */
 }
 
 .brand-mark, .brand-logo {
@@ -84,7 +86,7 @@ body.role-client [data-role="client"] {
     justify-content: center;
     font-weight: 800;
     text-decoration: none;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Added to keep logo size consistent */
 }
 
 .nav-section {
@@ -103,7 +105,7 @@ body.role-client [data-role="client"] {
     transition: 0.2s;
     margin: 4px 10px;
     border-radius: 8px;
-    white-space: nowrap;
+    white-space: nowrap; /* Added to keep text on one line */
 }
 
 .nav-item-custom:hover {
@@ -124,10 +126,16 @@ body.role-client [data-role="client"] {
     flex-shrink: 0;
 }
 
+/* Logic to hide text and center icons when collapsed */
+.sidebar.collapsed {
+    width: 75px !important;
+    min-width: 75px !important;
+    align-items: center !important;
+}
+
 .sidebar.collapsed .nav-text,
 .sidebar.collapsed .brand-name {
-    opacity: 0;
-    visibility: hidden;
+    display: none !important;
 }
 
 .sidebar .nav-text,
@@ -136,10 +144,12 @@ body.role-client [data-role="client"] {
 }
 
 .sidebar.collapsed .nav-item-custom {
-    padding-left: 0;
-    padding-right: 0;
-    justify-content: center;
-    margin: 4px 12px;
+    width: 56px !important;
+    margin: 8px auto !important;
+    padding: 12px 0 !important;
+    gap: 0 !important;
+    justify-content: center !important;
+    align-items: center !important;
 }
 
 .sidebar.collapsed .brand {
@@ -147,6 +157,81 @@ body.role-client [data-role="client"] {
     padding-left: 0;
     padding-right: 0;
     gap: 0;
+    width: 100%;
+}
+
+.sidebar.collapsed .brand-mark,
+.sidebar.collapsed .brand-logo {
+    margin: 0 auto !important;
+}
+
+.sidebar.collapsed .nav-item-custom i {
+    width: auto !important;
+    min-width: auto !important;
+}
+
+.status-pill,
+.status-select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    padding: 0.65rem 1rem;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    border: 1px solid rgba(28, 43, 58, 0.12);
+    background: #ffffff;
+    color: var(--navy);
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.status-pill.status-ongoing,
+.status-select.status-ongoing {
+    background: rgba(217, 142, 63, 0.12);
+    color: var(--amber);
+    border-color: rgba(217, 142, 63, 0.24);
+}
+
+.status-pill.status-on_hold,
+.status-select.status-on_hold {
+    background: rgba(28, 43, 58, 0.06);
+    color: rgba(28, 43, 58, 0.8);
+    border-color: rgba(28, 43, 58, 0.16);
+}
+
+.status-pill.status-completed,
+.status-select.status-completed {
+    background: rgba(28, 43, 58, 0.06);
+    color: var(--navy);
+    border-color: rgba(28, 43, 58, 0.16);
+}
+
+.status-pill.status-void,
+.status-select.status-void {
+    background: rgba(220, 53, 69, 0.08);
+    color: #c62828;
+    border-color: rgba(220, 53, 69, 0.16);
+}
+
+.status-select {
+    padding-right: 1rem;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, rgba(28, 43, 58, 0.35) 50%),
+                      linear-gradient(135deg, rgba(28, 43, 58, 0.35) 50%, transparent 50%);
+    background-position: calc(100% - 1rem) 50%, calc(100% - 0.7rem) 50%;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
+.status-input-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* --- Topbar --- */

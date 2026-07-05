@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Client — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css?v=3">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
     <div class="shell">
         <nav class="sidebar shadow" id="sidebar">
-            <div class="p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
+            <div class="brand p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
                 <div class="brand-mark ms-1">A</div>
                 <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
@@ -127,6 +127,13 @@
         }
 
         async function createClient() {
+            const role = await getCurrentRole();
+            if (role !== 'admin') {
+                alert('Only Finance Admins can create new clients.');
+                window.location.href = 'clients.html';
+                return;
+            }
+
             const name = document.getElementById('client-name').value.trim();
             const contact = document.getElementById('client-contact').value.trim();
             const managerId = document.getElementById('manager-select').value || null;
@@ -169,7 +176,10 @@
             window.location.href = 'clients.html';
         }
 
-        document.addEventListener('DOMContentLoaded', loadFormOptions);
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await enforceRole(['admin'], 'clients.html')) return;
+            await loadFormOptions();
+        });
         // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
     </script>
 </body>

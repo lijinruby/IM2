@@ -24,9 +24,43 @@ window.supabase = _supabase;
 //   pm     -> Project Manager (creates/updates project records, tracks status)
 //   client -> Client         (read-only: own billing + payment history)
 const ROLE_LABELS = { admin: 'Finance Admin', pm: 'Project Manager', client: 'Client' };
-function roleLabel(role) {
-    return ROLE_LABELS[role] || role;
+function normalizeRole(role) {
+    const raw = (role || '').toString().trim().toLowerCase();
+    if (!raw) return 'client';
+    if (raw.includes('admin')) return 'admin';
+    if (raw.includes('pm') || raw.includes('manager') || raw.includes('project')) return 'pm';
+    if (raw.includes('client') || raw.includes('partner')) return 'client';
+    return 'client';
 }
+function roleLabel(role) {
+    return ROLE_LABELS[normalizeRole(role)] || role;
+}
+
+async function getCurrentRole() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return 'client';
+
+    const { data: profile, error } = await _supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    const role = normalizeRole(profile?.role || localStorage.getItem('userRole') || 'client');
+    localStorage.setItem('userRole', role);
+    return role;
+}
+
+async function enforceRole(allowedRoles = [], redirectUrl = 'dashboard.html') {
+    const role = await getCurrentRole();
+    if (!allowedRoles.includes(role)) {
+        const prefix = window.location.pathname.includes('/views/') ? '' : '';
+        window.location.href = prefix + redirectUrl;
+        return false;
+    }
+    return true;
+}
+
 function showMessage(text, type = 'danger') {
     const msgBox = document.getElementById('auth-message');
     if (!msgBox) return;
@@ -86,35 +120,23 @@ async function protectPage() {
             return;
         }
 
-        // Fetch the current role from the DB so a role change by an admin
-        // takes effect immediately instead of relying on a stale cached value.
-        let role = localStorage.getItem('userRole') || 'client';
-        const { data: profile } = await _supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-
-        if (profile?.role) {
-            role = profile.role;
-            localStorage.setItem('userRole', role);
-        }
-
+        const role = await getCurrentRole();
         document.body.classList.remove('role-loading', 'role-admin', 'role-pm', 'role-client');
         document.body.classList.add('role-' + role);
 
         const userTag = document.getElementById('userTag');
         if (userTag) {
-            userTag.innerText = roleLabel(role).toUpperCase();
             if (role === 'admin') userTag.className = "badge rounded-pill bg-danger";
             else if (role === 'pm') userTag.className = "badge rounded-pill bg-primary";
             else userTag.className = "badge rounded-pill bg-success";
+            userTag.innerText = roleLabel(role).toUpperCase();
         }
 
         const roleBadge = document.getElementById('userRoleBadge');
         if (roleBadge) roleBadge.innerText = roleLabel(role);
     }
 }
+
 
 // Login Process
 async function login() {
@@ -146,7 +168,7 @@ async function login() {
         .eq('id', data.user.id)
         .single();
 
-    localStorage.setItem('userRole', profile?.role || 'client');
+    localStorage.setItem('userRole', normalizeRole(profile?.role || 'client'));
     window.location.href = 'views/dashboard.html';
 }
 

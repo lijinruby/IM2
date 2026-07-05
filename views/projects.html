@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Management — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css?v=3">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
     <div class="shell">
         <nav class="sidebar shadow" id="sidebar">
-            <div class="p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
+            <div class="brand p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
                 <div class="brand-mark ms-1">A</div>
                 <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
@@ -42,7 +44,7 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h2 class="fw-bold mb-2">Project Portfolio</h2>
-                            <p class="opacity-75 mb-4" data-role="admin">Read-only oversight of all active project records and contract values.</p>
+                            <p class="opacity-75 mb-4" data-role="admin">Oversight of all active project records, contract values, and status.</p>
                             <p class="opacity-75 mb-4" data-role="pm">Track milestone progress, contract values, and client deliverables for your projects.</p>
                             <!-- Project creation belongs to Project Managers, not Finance Admin. -->
                             <a href="new-project.html" class="btn btn-amber shadow-sm" data-role="pm"><i class="bi bi-plus-square me-2"></i> New Project</a>
@@ -113,10 +115,11 @@
         </div>
     </div>
 
-    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/auth.js?v=2"></script>
     <script>
         const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
         let allProjects = [];
+        console.log('projects.html inline script loaded');
 
         async function loadProjects() {
             const list = document.getElementById('projects-list');
@@ -124,7 +127,23 @@
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
 
-                const role = localStorage.getItem('userRole') || 'client';
+                // FIX: reading localStorage('userRole') here raced against auth.js's
+                // protectPage(), which also fetches the role and only THEN writes it
+                // to localStorage. Depending on timing, this code could read a stale
+                // or missing value and render read-only badges even for an admin/pm.
+                // Fetch the role directly from the DB so there's no race at all.
+                const { data: profile, error: profileErr } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profileErr) {
+                    console.error("Error fetching role:", profileErr);
+                }
+
+                const role = normalizeRole(profile?.role || localStorage.getItem('userRole') || 'client');
+                localStorage.setItem('userRole', role);
 
                 let query = supabase
                     .from('projects')
@@ -137,6 +156,7 @@
                         clients ( name )
                     `);
 
+                // Admin sees everything. PM sees only their own projects.
                 if (role === 'pm') {
                     query = query.eq('pm_id', user.id);
                 }
@@ -147,6 +167,7 @@
                 allProjects = projects || [];
                 window.currentUserId = user.id;
                 window.currentRole = role;
+                console.log('projects.html loadProjects', { role, userId: user.id, projectCount: allProjects.length });
                 renderProjects(allProjects);
 
             } catch (err) {
@@ -172,22 +193,25 @@
                 totalContract += amt;
 
                 const clientName = proj.clients ? proj.clients.name : '<span class="text-muted">No Client</span>';
-                const canEdit = window.currentRole === 'pm' && proj.pm_id === window.currentUserId;
 
-                let statusCell;
-                if (canEdit) {
-                    // PMs track/update status on their own projects.
-                    statusCell = `
-                        <select class="form-select form-select-sm" style="width:140px; display:inline-block;" onchange="updateProjectStatus('${proj.id}', this.value)">
+                // FIX: previously only a PM who was the EXACT pm_id match on that
+                // project could edit status — everyone else (including Admin) only
+                // saw a read-only badge. Admin now can edit ANY project's status,
+                // and a PM can still edit only their own.
+                const currentRole = normalizeRole(window.currentRole || localStorage.getItem('userRole') || 'client');
+                const canEdit =
+                    currentRole === 'admin' ||
+                    (currentRole === 'pm' && proj.pm_id === window.currentUserId);
+
+                const statusClass = `status-${proj.status || 'ongoing'}`;
+                const statusLabel = proj.status ? proj.status.replace('_', ' ').toUpperCase() : 'ONGOING';
+                const statusCell = canEdit
+                    ? `<div class="status-input-wrapper"><select id="status-select-${proj.id}" class="form-select form-select-sm status-select ${statusClass}" style="width: 150px;" onchange="updateProjectStatus('${proj.id}', this.value)">
                             <option value="ongoing" ${proj.status === 'ongoing' ? 'selected' : ''}>ONGOING</option>
                             <option value="on_hold" ${proj.status === 'on_hold' ? 'selected' : ''}>ON HOLD</option>
                             <option value="completed" ${proj.status === 'completed' ? 'selected' : ''}>COMPLETED</option>
-                        </select>`;
-                } else {
-                    const statusLabel = (proj.status || 'ongoing').toUpperCase().replace('_', ' ');
-                    const statusClass = proj.status === 'completed' ? 'bg-primary-subtle text-primary' : 'bg-success-subtle text-success';
-                    statusCell = `<span class="badge ${statusClass} px-3 py-2 rounded-pill">${statusLabel}</span>`;
-                }
+                        </select></div>`
+                    : `<span class="status-pill ${statusClass}">${statusLabel}</span>`;
 
                 list.innerHTML += `
                     <tr>
@@ -224,7 +248,10 @@
             renderProjects(allProjects.filter(p => p.name.toLowerCase().includes(q)));
         });
 
-        document.addEventListener('DOMContentLoaded', loadProjects);
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await enforceRole(['admin', 'pm'], 'dashboard.html')) return;
+            await loadProjects();
+        });
         // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
     </script>
 </body>
