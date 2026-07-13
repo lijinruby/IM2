@@ -98,7 +98,14 @@ const REQUEST_STATUS_LABELS = {
     under_review: 'Under Review',
     approved: 'Approved',
     rejected: 'Rejected',
-    verified: 'Verified'
+    verified: 'Verified',
+    // project_requests (proposals), as of the v3 flip: PM authors, client confirms.
+    confirmed: 'Confirmed',
+    declined: 'Declined',
+    // consultation_requests
+    new: 'New',
+    contacted: 'Contacted',
+    closed: 'Closed'
 };
 function requestStatusLabel(status) {
     return REQUEST_STATUS_LABELS[status] || (status || '').replace(/_/g, ' ');

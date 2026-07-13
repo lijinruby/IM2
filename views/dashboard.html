@@ -19,10 +19,10 @@
                 <a href="dashboard.html" class="nav-item-custom active" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
                 <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Proposals</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Proposals</span></a>
                 <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
                 <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
                 <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
@@ -51,7 +51,7 @@
                             <div class="d-flex gap-2 flex-wrap">
                                 <a href="projects.html" class="btn btn-amber">New Project</a>
                                 <a href="billing.html" class="btn btn-outline-light" data-role="client">Review Billing</a>
-                                <a href="requests.html" class="btn btn-outline-light" data-role="pm">Review Requests</a>
+                                <a href="requests.html" class="btn btn-outline-light" data-role="pm">Project Proposals</a>
                             </div>
                         </div>
                     </div>
@@ -132,7 +132,7 @@
                             <div class="d-flex align-items-center gap-3">
                                 <div class="kpi-icon bg-warning-subtle text-warning"><i class="bi bi-inbox"></i></div>
                                 <div>
-                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Pending Project Requests</small>
+                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Proposals Awaiting Confirmation</small>
                                     <h3 class="fw-bold mb-0" id="pm-pending-requests">0</h3>
                                 </div>
                             </div>
@@ -281,7 +281,8 @@
                 document.getElementById('pm-avg-progress').innerText = avgProgress + '%';
 
                 const { count: pendingReq } = await supabase
-                    .from('project_requests').select('*', { count: 'exact', head: true }).in('status', ['pending', 'under_review']);
+                    .from('project_requests').select('*', { count: 'exact', head: true })
+                    .eq('requested_by', user.id).eq('status', 'pending');
                 document.getElementById('pm-pending-requests').innerText = pendingReq || 0;
 
                 const { count: pendingBilling } = await supabase
@@ -325,7 +326,7 @@
                     document.getElementById('client-paid').innerText = php.format(paid);
                 } else {
                     document.getElementById('announcementText').innerHTML =
-                        "Your account isn't linked to a client company yet — ask an administrator to link your profile before you can submit project requests or view billing.";
+                        "Your account isn't linked to a client company yet — ask an administrator to link your profile before you can request a consultation, confirm proposals, or view billing.";
                 }
             }
         }
