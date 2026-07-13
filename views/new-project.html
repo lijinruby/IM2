@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Project — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=3">
+    <link rel="stylesheet" href="../assets/css/style.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
@@ -16,11 +16,17 @@
                 <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
             <div class="mt-4 flex-grow-1">
-                <a href="dashboard.html" class="nav-item-custom"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
-                <a href="clients.html" class="nav-item-custom" data-role="admin"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
-                <a href="projects.html" class="nav-item-custom active" data-role="admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="payments.html" class="nav-item-custom" data-role="admin"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
-                <a href="billing.html" class="nav-item-custom"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="projects.html" class="nav-item-custom active" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -33,7 +39,7 @@
                     <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
                     <h6 class="mb-0 fw-bold">New Project</h6>
                 </div>
-                <div class="badge rounded-pill bg-success px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+                <div class="badge rounded-pill px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
             </header>
 
             <main class="p-4 container-fluid">
@@ -41,7 +47,7 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h2 class="fw-bold mb-2">Create Project</h2>
-                            <p class="opacity-75 mb-0">Assign a project to a client and a project manager.</p>
+                            <p class="opacity-75 mb-0" id="pageSubtitle">Assign a project to a client and a project manager.</p>
                         </div>
                     </div>
                 </div>
@@ -49,11 +55,25 @@
                 <div class="row justify-content-center">
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm p-4 p-lg-5" style="border-radius: 16px;">
+                            <div id="fromRequestNotice" class="alert alert-light border d-none mb-4">
+                                <i class="bi bi-info-circle me-2 text-primary"></i>
+                                Creating this project from an approved client request. Title, location, type, and description were carried over — fill in the contract terms below.
+                            </div>
                             <h5 class="fw-bold mb-4 text-navy">Project Details</h5>
 
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="project-name" placeholder="Project Name">
                                 <label for="project-name">Project Name</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="project-location" placeholder="Location">
+                                <label for="project-location">Location</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <textarea class="form-control" id="project-description" placeholder="Description" style="height: 90px"></textarea>
+                                <label for="project-description">Description</label>
                             </div>
 
                             <div class="form-floating mb-3">
@@ -71,15 +91,75 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="number" class="form-control" id="project-amount" placeholder="0.00">
-                                <label for="project-amount">Contract Amount (PHP)</label>
+                                <select class="form-select" id="project-financial-admin">
+                                    <option value="">Loading finance admins...</option>
+                                </select>
+                                <label for="project-financial-admin">Financial Admin</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <select class="form-select" id="project-type">
+                                    <option value="mobilization">Mobilization (Downpayment)</option>
+                                    <option value="progress">Progress Billing</option>
+                                    <option value="final">Final Billing</option>
+                                    <option value="combination" selected>Combination</option>
+                                </select>
+                                <label for="project-type">Payment Mode / Type</label>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="project-noa-date">
+                                        <label for="project-noa-date">Notice of Award Date</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="project-ntp-date">
+                                        <label for="project-ntp-date">Notice to Proceed Date</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="project-working-days" placeholder="0">
+                                        <label for="project-working-days">Working Days</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="project-completion-date">
+                                        <label for="project-completion-date">Target Completion Date</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="project-amount" placeholder="0.00">
+                                        <label for="project-amount">Project Cost / Contract Amount (PHP)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="project-additional-costs" placeholder="0.00" value="0">
+                                        <label for="project-additional-costs">Additional Costs (PHP)</label>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-floating mb-4">
                                 <select class="form-select" id="project-status">
-                                    <option value="ongoing" selected>Ongoing</option>
-                                    <option value="on_hold">On Hold</option>
+                                    <option value="planning" selected>Planning</option>
+                                    <option value="mobilization">Mobilization</option>
+                                    <option value="ongoing">Ongoing</option>
+                                    <option value="for_review">For Review</option>
                                     <option value="completed">Completed</option>
+                                    <option value="closed">Closed</option>
                                 </select>
                                 <label for="project-status">Status</label>
                             </div>
@@ -97,8 +177,10 @@
         </div>
     </div>
 
-    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/auth.js?v=2"></script>
     <script>
+        const requestId = new URLSearchParams(window.location.search).get('request_id');
+
         async function loadFormOptions() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
@@ -119,14 +201,11 @@
             const pmFieldLabel = document.querySelector('label[for="project-pm"]');
 
             if (role === 'pm') {
-                // Project ownership: a PM creates projects assigned to themselves,
-                // not to whichever PM they choose from a list.
                 const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
                 pmSelect.innerHTML = `<option value="${user.id}" selected>${profile?.full_name || 'You'} (you)</option>`;
                 pmSelect.disabled = true;
                 if (pmFieldLabel) pmFieldLabel.innerText = 'Project Manager (you)';
             } else {
-                // Admin/oversight view: can still assign any PM if needed.
                 const { data: pms } = await supabase.from('profiles').select('id, full_name').eq('role', 'pm');
                 pmSelect.innerHTML = '<option value="">-- Unassigned --</option>';
                 (pms || []).forEach(p => {
@@ -135,6 +214,40 @@
                     opt.textContent = p.full_name || p.id;
                     pmSelect.appendChild(opt);
                 });
+            }
+
+            const { data: admins } = await supabase.from('profiles').select('id, full_name').eq('role', 'admin');
+            const faSelect = document.getElementById('project-financial-admin');
+            faSelect.innerHTML = '<option value="">-- Unassigned --</option>';
+            (admins || []).forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.full_name || a.id;
+                faSelect.appendChild(opt);
+            });
+
+            // If we arrived here from an approved Project Request, pre-fill
+            // and lock the fields the client already supplied.
+            if (requestId) {
+                const { data: req, error } = await supabase
+                    .from('project_requests')
+                    .select('id, client_id, title, location, project_type, description, status')
+                    .eq('id', requestId)
+                    .single();
+
+                if (!error && req && req.status === 'approved') {
+                    document.getElementById('fromRequestNotice').classList.remove('d-none');
+                    document.getElementById('pageSubtitle').innerText = 'Converting an approved client request into an active project.';
+                    document.getElementById('project-name').value = req.title || '';
+                    document.getElementById('project-location').value = req.location || '';
+                    document.getElementById('project-description').value = req.description || '';
+                    if (req.project_type) {
+                        const typeMap = { mobilization: 'mobilization', progress: 'progress', final: 'final' };
+                        document.getElementById('project-type').value = typeMap[req.project_type] || 'combination';
+                    }
+                    clientSelect.value = req.client_id;
+                    clientSelect.disabled = true;
+                }
             }
         }
 
@@ -149,8 +262,17 @@
             const name = document.getElementById('project-name').value.trim();
             const clientId = document.getElementById('project-client').value;
             const pmId = document.getElementById('project-pm').value || null;
+            const financialAdminId = document.getElementById('project-financial-admin').value || null;
             const amount = document.getElementById('project-amount').value || 0;
+            const additionalCosts = document.getElementById('project-additional-costs').value || 0;
             const status = document.getElementById('project-status').value;
+            const location = document.getElementById('project-location').value.trim() || null;
+            const description = document.getElementById('project-description').value.trim() || null;
+            const projectType = document.getElementById('project-type').value;
+            const noaDate = document.getElementById('project-noa-date').value || null;
+            const ntpDate = document.getElementById('project-ntp-date').value || null;
+            const workingDays = document.getElementById('project-working-days').value || null;
+            const completionDate = document.getElementById('project-completion-date').value || null;
 
             if (!name || !clientId) {
                 alert("Please provide a project name and select a client.");
@@ -162,22 +284,28 @@
             btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div> Creating...';
             btn.disabled = true;
 
-            const { error } = await supabase.from('projects').insert([{
-                name,
-                client_id: clientId,
-                pm_id: pmId,
-                contract_amount: parseFloat(amount) || 0,
-                status
-            }]);
+            const { data: newProject, error } = await supabase.from('projects').insert([{
+                name, client_id: clientId, pm_id: pmId, financial_admin_id: financialAdminId,
+                contract_amount: parseFloat(amount) || 0, additional_costs: parseFloat(additionalCosts) || 0,
+                status, location, description, project_type: projectType,
+                notice_of_award_date: noaDate, notice_to_proceed_date: ntpDate,
+                working_days: workingDays ? parseInt(workingDays) : null, completion_date: completionDate,
+                progress_percentage: 0
+            }]).select().single();
 
             if (error) {
                 alert("Error: " + error.message);
                 btn.innerHTML = originalText;
                 btn.disabled = false;
-            } else {
-                alert("Project created successfully!");
-                window.location.href = 'projects.html';
+                return;
             }
+
+            if (requestId && newProject) {
+                await supabase.from('project_requests').update({ converted_project_id: newProject.id }).eq('id', requestId);
+            }
+
+            alert("Project created successfully!");
+            window.location.href = 'projects.html';
         }
 
         document.addEventListener('DOMContentLoaded', async () => {

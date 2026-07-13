@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payments — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=3">
+    <link rel="stylesheet" href="../assets/css/style.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
@@ -16,12 +16,17 @@
                 <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
             <div class="mt-4 flex-grow-1">
-                <a href="dashboard.html" class="nav-item-custom"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
-                <a href="clients.html" class="nav-item-custom" data-role="admin"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
-                <a href="projects.html" class="nav-item-custom" data-role="admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="payments.html" class="nav-item-custom active" data-role="admin"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
-                <a href="projects.html" class="nav-item-custom" data-role="pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="billing.html" class="nav-item-custom"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="payments.html" class="nav-item-custom active" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -32,77 +37,85 @@
             <header class="topbar px-4">
                 <div class="d-flex align-items-center">
                     <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
-                    <h6 class="mb-0 fw-bold">Financial Records</h6>
+                    <h6 class="mb-0 fw-bold">Payments</h6>
                 </div>
-                <div class="badge rounded-pill bg-success px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+                <div class="badge rounded-pill px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
             </header>
 
             <main class="p-4 container-fluid">
                 <div class="welcome-header shadow-sm border-0">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h2 class="fw-bold mb-2">Collection History</h2>
-                            <p class="opacity-75 mb-4">Monitor all incoming payments and verify bank transaction records.</p>
-                            <!-- FIX: this button used to do nothing. -->
-                            <button class="btn btn-amber shadow-sm" data-role="admin" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
-                                <i class="bi bi-plus-circle me-2"></i> Record Payment
-                            </button>
+                            <h2 class="fw-bold mb-2">Payments</h2>
+                            <p class="opacity-75 mb-4">Record payments against statements and verify proofs clients have uploaded.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="row g-4 mb-5">
-                    <div class="col-md-4">
-                        <div class="card kpi-card p-4 border-0">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-cash-stack"></i></div>
-                                <div>
-                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Collected</small>
-                                    <h3 class="fw-bold mb-0" id="total-collected">₱0.00</h3>
+                <ul class="nav nav-pills mb-4" id="paymentsTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-tab="proofs" onclick="switchTab('proofs')">
+                            Pending Proofs <span class="badge bg-warning text-dark ms-1" id="proofs-badge">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-tab="history" onclick="switchTab('history')">Payment History</button>
+                    </li>
+                </ul>
+
+                <div id="tab-proofs">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+                                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0">Client-Uploaded Proofs of Payment</h6>
+                                    <button class="btn btn-sm btn-light border" onclick="loadProofs()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card kpi-card p-4 border-0">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="kpi-icon bg-info-subtle text-info"><i class="bi bi-arrow-repeat"></i></div>
-                                <div>
-                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Transactions</small>
-                                    <h3 class="fw-bold mb-0" id="payment-count">0</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light">
+                                            <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
+                                                <th class="ps-4">Statement</th>
+                                                <th>Claimed Amount</th>
+                                                <th>File</th>
+                                                <th>Notes</th>
+                                                <th>Status</th>
+                                                <th class="text-end pe-4">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="proofs-list">
+                                            <tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading...</span></td></tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
-                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0">Received Payments</h6>
-                                <button class="btn btn-sm btn-light border" onclick="loadPayments()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="bg-light">
-                                        <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
-                                            <th class="ps-4">Pay Code</th>
-                                            <th>Statement Ref</th>
-                                            <th>Date Received</th>
-                                            <th>Amount</th>
-                                            <th class="text-end pe-4">Verification</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="payments-list">
-                                        <tr>
-                                            <td colspan="5" class="text-center py-5">
-                                                <div class="spinner-border text-primary spinner-border-sm me-2"></div>
-                                                <span class="text-muted">Loading payments...</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                <div id="tab-history" class="d-none">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+                                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0">All Recorded Payments</h6>
+                                    <button class="btn btn-amber btn-sm" data-bs-toggle="modal" data-bs-target="#recordPaymentModal"><i class="bi bi-plus-lg me-1"></i> Record Payment</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light">
+                                            <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
+                                                <th class="ps-4">Statement</th>
+                                                <th>Date Received</th>
+                                                <th>Amount Paid</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="payments-list">
+                                            <tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading...</span></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -116,171 +129,208 @@
         <div class="modal-dialog">
             <div class="modal-content" style="border-radius: 16px;">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Record a Payment</h5>
+                    <h5 class="modal-title fw-bold">Record Payment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-floating mb-3">
-                        <select class="form-select" id="unpaid-bill-select">
-                            <option value="">Loading unpaid statements...</option>
-                        </select>
-                        <label for="unpaid-bill-select">Unpaid Statement</label>
+                        <select class="form-select" id="pay-billing"><option value="">Loading statements...</option></select>
+                        <label for="pay-billing">Billing Statement</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <input type="number" class="form-control" id="payment-amount" placeholder="0.00">
-                        <label for="payment-amount">Amount Received (PHP)</label>
+                        <input type="number" class="form-control" id="pay-amount" placeholder="0.00">
+                        <label for="pay-amount">Amount Paid (PHP)</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="pay-reference" placeholder="Reference #">
+                        <label for="pay-reference">Payment Reference Number</label>
                     </div>
                     <div class="form-floating">
-                        <textarea class="form-control" id="payment-notes" placeholder="Notes" style="height: 90px"></textarea>
-                        <label for="payment-notes">Notes (optional)</label>
+                        <textarea class="form-control" id="pay-notes" placeholder="Notes" style="height: 80px"></textarea>
+                        <label for="pay-notes">Notes</label>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-amber" id="record-payment-btn" onclick="recordPayment()">Save Payment</button>
+                    <button type="button" class="btn btn-amber" id="record-payment-btn" onclick="recordPayment()">Record Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify Proof Modal -->
+    <div class="modal fade" id="verifyProofModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Verify Proof of Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="row small mb-3" id="verifyProofDetails"></dl>
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control" id="verify-amount" placeholder="0.00">
+                        <label for="verify-amount">Amount to Record as Paid (PHP)</label>
+                    </div>
+                    <div class="form-floating">
+                        <textarea class="form-control" id="verify-notes" placeholder="Notes" style="height: 80px"></textarea>
+                        <label for="verify-notes">Notes</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-danger" onclick="rejectProof()">Reject</button>
+                    <button type="button" class="btn btn-amber" onclick="verifyProof()">Verify &amp; Record Payment</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/auth.js?v=2"></script>
     <script>
         const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+        let allProofs = [];
+        let currentProofId = null;
 
-        async function loadPayments() {
-            const list = document.getElementById('payments-list');
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-
-                // NEW: `payments` table didn't exist before — see schema.sql.
-                const { data: payments, error } = await supabase
-                    .from('payments')
-                    .select('id, amount_paid, payment_date, billing_id')
-                    .order('payment_date', { ascending: false });
-
-                if (error) throw error;
-
-                list.innerHTML = '';
-                let totalAmount = 0;
-
-                if (!payments || payments.length === 0) {
-                    list.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No payments recorded yet.</td></tr>';
-                    document.getElementById('total-collected').innerText = php.format(0);
-                    document.getElementById('payment-count').innerText = 0;
-                    return;
-                }
-
-                payments.forEach(pay => {
-                    const amt = parseFloat(pay.amount_paid) || 0;
-                    totalAmount += amt;
-
-                    const date = new Date(pay.payment_date).toLocaleDateString('en-PH', {
-                        year: 'numeric', month: 'short', day: 'numeric'
-                    });
-
-                    list.innerHTML += `
-                        <tr>
-                            <td class="ps-4 fw-bold text-navy">PAY-${pay.id.toString().slice(0, 4).toUpperCase()}</td>
-                            <td class="fw-semibold">BS-${pay.billing_id.toString().slice(0, 5).toUpperCase()}</td>
-                            <td>${date}</td>
-                            <td class="fw-bold text-success">${php.format(amt)}</td>
-                            <td class="text-end pe-4">
-                                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">VERIFIED</span>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                document.getElementById('total-collected').innerText = php.format(totalAmount);
-                document.getElementById('payment-count').innerText = payments.length;
-
-            } catch (err) {
-                console.error("Error loading payments:", err);
-                list.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger small">Error connecting to server.</td></tr>`;
-            }
+        function switchTab(tab) {
+            document.querySelectorAll('#paymentsTabs .nav-link').forEach(el => el.classList.remove('active'));
+            document.querySelector(`#paymentsTabs [data-tab="${tab}"]`).classList.add('active');
+            document.getElementById('tab-proofs').classList.toggle('d-none', tab !== 'proofs');
+            document.getElementById('tab-history').classList.toggle('d-none', tab !== 'history');
         }
 
-        async function loadUnpaidBills() {
-            const { data: bills, error } = await supabase
-                .from('billing')
-                .select('id, amount, projects ( name )')
-                .eq('status', 'unpaid');
+        async function loadProofs() {
+            const list = document.getElementById('proofs-list');
+            const { data: proofs, error } = await supabase
+                .from('payment_proofs')
+                .select('id, amount_claimed, file_name, storage_path, notes, status, created_at, billing_id, billing:billing ( id, amount, projects ( name ) )')
+                .order('created_at', { ascending: false });
 
-            const select = document.getElementById('unpaid-bill-select');
-            if (error || !bills || bills.length === 0) {
-                select.innerHTML = '<option value="">No unpaid statements</option>';
+            if (error) { list.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger small">Error loading proofs.</td></tr>`; return; }
+
+            allProofs = proofs || [];
+            document.getElementById('proofs-badge').innerText = allProofs.filter(p => p.status === 'pending').length;
+
+            if (!allProofs.length) {
+                list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No proofs of payment uploaded yet.</td></tr>';
                 return;
             }
 
-            select.innerHTML = '<option value="" selected disabled>-- Choose a statement --</option>';
-            bills.forEach(b => {
+            list.innerHTML = allProofs.map(p => `
+                <tr>
+                    <td class="ps-4">${p.billing?.projects?.name || 'Unknown Project'} <div class="text-muted small">BS-${(p.billing_id||'').toString().slice(0,4).toUpperCase()}</div></td>
+                    <td class="fw-bold">${p.amount_claimed ? php.format(p.amount_claimed) : '—'}</td>
+                    <td><button class="btn btn-light btn-sm border" onclick="openFromBucket('payment-proofs','${p.storage_path}')"><i class="bi bi-file-earmark-arrow-down me-1"></i>${p.file_name}</button></td>
+                    <td class="text-muted small">${p.notes || '—'}</td>
+                    <td><span class="badge rounded-pill ${requestBadgeClass(p.status)} px-3 py-2">${requestStatusLabel(p.status).toUpperCase()}</span></td>
+                    <td class="text-end pe-4">${p.status === 'pending' ? `<button class="btn btn-amber btn-sm" onclick="openVerify('${p.id}')">Review</button>` : '<span class="text-muted small">—</span>'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function openVerify(proofId) {
+            currentProofId = proofId;
+            const p = allProofs.find(x => x.id === proofId);
+            if (!p) return;
+            document.getElementById('verifyProofDetails').innerHTML = `
+                <dt class="col-4 text-muted">Project</dt><dd class="col-8">${p.billing?.projects?.name || '—'}</dd>
+                <dt class="col-4 text-muted">Claimed Amount</dt><dd class="col-8">${p.amount_claimed ? php.format(p.amount_claimed) : '—'}</dd>
+                <dt class="col-4 text-muted">Client Notes</dt><dd class="col-8">${p.notes || '—'}</dd>
+            `;
+            document.getElementById('verify-amount').value = p.amount_claimed || '';
+            document.getElementById('verify-notes').value = '';
+            new bootstrap.Modal(document.getElementById('verifyProofModal')).show();
+        }
+
+        async function verifyProof() {
+            const amount = document.getElementById('verify-amount').value;
+            const notes = document.getElementById('verify-notes').value.trim() || null;
+            if (!amount || parseFloat(amount) <= 0) { alert('Enter a valid amount.'); return; }
+            const { error } = await supabase.rpc('verify_payment_proof', {
+                proof_id: currentProofId, verified_amount: parseFloat(amount), admin_notes: notes
+            });
+            if (error) { alert('Error: ' + error.message); return; }
+            bootstrap.Modal.getInstance(document.getElementById('verifyProofModal')).hide();
+            await loadProofs();
+            await loadPayments();
+        }
+
+        async function rejectProof() {
+            const notes = document.getElementById('verify-notes').value.trim() || null;
+            const { error } = await supabase.rpc('reject_payment_proof', { proof_id: currentProofId, admin_notes: notes });
+            if (error) { alert('Error: ' + error.message); return; }
+            bootstrap.Modal.getInstance(document.getElementById('verifyProofModal')).hide();
+            await loadProofs();
+        }
+
+        async function loadPayments() {
+            const list = document.getElementById('payments-list');
+            const { data: payments, error } = await supabase
+                .from('payments')
+                .select('id, amount_paid, payment_date, notes, billing_id, billing:billing ( projects ( name ) )')
+                .order('payment_date', { ascending: false });
+
+            if (error) { list.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger small">Error loading payments.</td></tr>`; return; }
+            if (!payments || !payments.length) { list.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No payments recorded yet.</td></tr>'; return; }
+
+            list.innerHTML = payments.map(p => `
+                <tr>
+                    <td class="ps-4">${p.billing?.projects?.name || 'Unknown Project'} <div class="text-muted small">BS-${(p.billing_id||'').toString().slice(0,4).toUpperCase()}</div></td>
+                    <td>${fmtDate(p.payment_date)}</td>
+                    <td class="fw-bold text-success">${php.format(p.amount_paid)}</td>
+                    <td class="text-muted small">${p.notes || '—'}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadBillingOptions() {
+            const { data: bills } = await supabase
+                .from('billing').select('id, amount, balance_left, status, projects ( name )')
+                .neq('status', 'paid');
+            const select = document.getElementById('pay-billing');
+            select.innerHTML = '<option value="" selected disabled>-- Choose a Statement --</option>';
+            (bills || []).forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b.id;
-                opt.dataset.amount = b.amount;
-                opt.textContent = `BS-${b.id.toString().slice(0,5).toUpperCase()} — ${b.projects?.name || 'Unknown'} (${php.format(parseFloat(b.amount))})`;
+                opt.textContent = `${b.projects ? b.projects.name : 'Unknown'} — Balance ${php.format(b.balance_left ?? b.amount)}`;
                 select.appendChild(opt);
-            });
-
-            select.addEventListener('change', () => {
-                const opt = select.selectedOptions[0];
-                if (opt?.dataset?.amount) {
-                    document.getElementById('payment-amount').value = opt.dataset.amount;
-                }
             });
         }
 
         async function recordPayment() {
-            const billingId = document.getElementById('unpaid-bill-select').value;
-            const amount = document.getElementById('payment-amount').value;
-            const notes = document.getElementById('payment-notes').value;
+            const billingId = document.getElementById('pay-billing').value;
+            const amount = document.getElementById('pay-amount').value;
+            const reference = document.getElementById('pay-reference').value.trim();
+            const notes = document.getElementById('pay-notes').value.trim();
+            if (!billingId || !amount) { alert('Please choose a statement and enter an amount.'); return; }
 
-            if (!billingId || !amount) {
-                alert("Please choose a statement and enter the amount received.");
-                return;
-            }
+            const fullNotes = [reference ? `Ref: ${reference}` : null, notes || null].filter(Boolean).join(' — ') || null;
+
+            const btn = document.getElementById('record-payment-btn');
+            btn.disabled = true; btn.innerText = 'Recording...';
 
             const { data: { user } } = await supabase.auth.getUser();
-            const btn = document.getElementById('record-payment-btn');
-            btn.disabled = true;
-            btn.innerText = 'Saving...';
-
-            const { error: payError } = await supabase.from('payments').insert([{
-                billing_id: billingId,
-                amount_paid: parseFloat(amount),
-                recorded_by: user?.id || null,
-                notes: notes || null
+            const { error } = await supabase.from('payments').insert([{
+                billing_id: billingId, amount_paid: parseFloat(amount), recorded_by: user.id, notes: fullNotes
             }]);
 
-            if (payError) {
-                alert("Error recording payment: " + payError.message);
-                btn.disabled = false;
-                btn.innerText = 'Save Payment';
-                return;
-            }
+            btn.disabled = false; btn.innerText = 'Record Payment';
+            if (error) { alert('Error: ' + error.message); return; }
 
-            // Mark the statement as paid
-            const { error: billError } = await supabase.from('billing').update({ status: 'paid' }).eq('id', billingId);
-            if (billError) {
-                console.warn("Payment saved, but failed to flip billing status:", billError.message);
-            }
-
-            btn.disabled = false;
-            btn.innerText = 'Save Payment';
             bootstrap.Modal.getInstance(document.getElementById('recordPaymentModal')).hide();
-
-            document.getElementById('payment-amount').value = '';
-            document.getElementById('payment-notes').value = '';
-
+            document.getElementById('pay-amount').value = '';
+            document.getElementById('pay-reference').value = '';
+            document.getElementById('pay-notes').value = '';
+            await loadBillingOptions();
             await loadPayments();
-            await loadUnpaidBills();
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await enforceRole(['admin'], 'dashboard.html')) return;
+            await loadProofs();
             await loadPayments();
-            await loadUnpaidBills();
+            await loadBillingOptions();
         });
         // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
     </script>

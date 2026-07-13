@@ -75,6 +75,67 @@ function showMessage(text, type = 'danger') {
 }
 
 /**
+ * 2b. Shared display helpers (status labels/badges, dates, file uploads)
+ * Centralized here so every page — old and new — formats the same status
+ * the same way instead of each re-inventing a switch statement.
+ */
+const PROJECT_STATUS_LABELS = {
+    planning: 'Planning',
+    mobilization: 'Mobilization',
+    ongoing: 'Ongoing',
+    on_hold: 'On Hold', // legacy value from before the six-state spec statuses
+    for_review: 'For Review',
+    completed: 'Completed',
+    closed: 'Closed'
+};
+function statusLabel(status) {
+    if (!status) return 'Ongoing';
+    return PROJECT_STATUS_LABELS[status] || status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+const REQUEST_STATUS_LABELS = {
+    pending: 'Pending',
+    under_review: 'Under Review',
+    approved: 'Approved',
+    rejected: 'Rejected',
+    verified: 'Verified'
+};
+function requestStatusLabel(status) {
+    return REQUEST_STATUS_LABELS[status] || (status || '').replace(/_/g, ' ');
+}
+function requestBadgeClass(status) {
+    return 'badge-' + (status || 'pending');
+}
+
+function fmtDate(d) {
+    return d ? new Date(d).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+}
+function fmtDateTime(d) {
+    return d ? new Date(d).toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+}
+
+// Upload a File object to a private Supabase Storage bucket under a given
+// folder (project id / billing id), returning the storage path to save in
+// the matching index table (project_documents / payment_proofs).
+async function uploadToBucket(bucket, folder, file) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${folder}/${Date.now()}_${safeName}`;
+    const { error } = await _supabase.storage.from(bucket).upload(path, file, { upsert: false });
+    if (error) throw error;
+    return path;
+}
+
+// Open a private file in a new tab via a short-lived signed URL.
+async function openFromBucket(bucket, path) {
+    const { data, error } = await _supabase.storage.from(bucket).createSignedUrl(path, 120);
+    if (error) {
+        alert('Could not open file: ' + error.message);
+        return;
+    }
+    window.open(data.signedUrl, '_blank');
+}
+
+/**
  * 3. Sidebar Logic
  * FIX: pages used to ALSO attach their own click listener on #sidebarToggle,
  * so one click fired two toggles and visually cancelled itself out.

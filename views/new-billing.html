@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate Statement — ALEK Consultants</title>
+    <title>Issue Billing Statement — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=3">
+    <link rel="stylesheet" href="../assets/css/style.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
@@ -16,12 +16,17 @@
                 <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
             <div class="mt-4 flex-grow-1">
-                <a href="dashboard.html" class="nav-item-custom"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
-                <a href="clients.html" class="nav-item-custom" data-role="admin"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
-                <a href="projects.html" class="nav-item-custom" data-role="admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="payments.html" class="nav-item-custom" data-role="admin"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
-                <a href="projects.html" class="nav-item-custom" data-role="pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="billing.html" class="nav-item-custom active"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing.html" class="nav-item-custom active" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -32,17 +37,17 @@
             <header class="topbar px-4">
                 <div class="d-flex align-items-center">
                     <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
-                    <h6 class="mb-0 fw-bold">Generate Statement</h6>
+                    <h6 class="mb-0 fw-bold">Issue Billing Statement</h6>
                 </div>
-                <div class="badge rounded-pill bg-success px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+                <div class="badge rounded-pill px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
             </header>
 
             <main class="p-4 container-fluid">
                 <div class="welcome-header shadow-sm border-0 mb-4">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h2 class="fw-bold mb-2">Create New Billing</h2>
-                            <p class="opacity-75 mb-0">Issue a new financial statement for a specific project milestone.</p>
+                            <h2 class="fw-bold mb-2">Issue Billing Statement</h2>
+                            <p class="opacity-75 mb-0">Direct issuance by Finance Admin — for example, an adjustment or a billing not tied to a Project Manager's request. Most statements should instead come through <a href="billing-requests.html" class="text-white text-decoration-underline">Billing Requests</a>, where the PM's request is reviewed first.</p>
                         </div>
                     </div>
                 </div>
@@ -50,29 +55,35 @@
                 <div class="row justify-content-center">
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm p-4 p-lg-5" style="border-radius: 16px;">
-                            <h5 class="fw-bold mb-4 text-navy">Invoice Details</h5>
+                            <h5 class="fw-bold mb-4 text-navy">Statement Details</h5>
 
                             <div class="form-floating mb-3">
-                                <select class="form-select" id="project-select">
-                                    <option value="">Loading projects...</option>
-                                </select>
-                                <label for="project-select">Select Project</label>
+                                <select class="form-select" id="billing-project"><option value="">Loading projects...</option></select>
+                                <label for="billing-project">Project</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="number" class="form-control" id="bill-amount" placeholder="0.00">
-                                <label for="bill-amount">Amount (PHP)</label>
+                                <select class="form-select" id="billing-type">
+                                    <option value="mobilization">Mobilization</option>
+                                    <option value="progress" selected>Progress Billing</option>
+                                    <option value="final">Final Billing</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <label for="billing-type">Billing Type</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input type="number" class="form-control" id="billing-amount" placeholder="0.00">
+                                <label for="billing-amount">Amount (PHP)</label>
                             </div>
 
                             <div class="form-floating mb-4">
-                                <textarea class="form-control" id="bill-reason" placeholder="Details" style="height: 120px"></textarea>
-                                <label for="bill-reason">Billing Milestone / Description</label>
+                                <textarea class="form-control" id="billing-description" placeholder="Description" style="height: 90px"></textarea>
+                                <label for="billing-description">Description</label>
                             </div>
 
-                            <div class="d-flex gap-3 mt-2">
-                                <button onclick="createBill()" id="submit-btn" class="btn btn-amber py-3 flex-grow-1 shadow-sm">
-                                    Create Statement
-                                </button>
+                            <div class="d-flex gap-3">
+                                <button onclick="createBilling()" id="submit-btn" class="btn btn-amber py-3 flex-grow-1 shadow-sm">Issue Statement</button>
                                 <a href="billing.html" class="btn btn-light py-3 border px-4">Cancel</a>
                             </div>
                         </div>
@@ -82,90 +93,53 @@
         </div>
     </div>
 
-    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/auth.js?v=2"></script>
     <script>
-        // Populate projects dropdown. Note: RLS already limits a PM to their own
-        // projects here, so no extra client-side filtering is required.
         async function loadProjectOptions() {
-            try {
-                if (!await enforceRole(['admin', 'pm'], 'billing.html')) return;
-
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-
-                const role = await getCurrentRole();
-                let query = supabase.from('projects').select('id, name');
-                if (role === 'pm') {
-                    query = query.eq('pm_id', user.id);
-                }
-
-                const { data: projects, error } = await query;
-
-                if (error) throw error;
-
-                const select = document.getElementById('project-select');
-                select.innerHTML = '<option value="" selected disabled>-- Choose a Project --</option>';
-
-                (projects || []).forEach(proj => {
-                    const option = document.createElement('option');
-                    option.value = proj.id;
-                    option.textContent = proj.name;
-                    select.appendChild(option);
-                });
-
-            } catch (err) {
-                console.error("Error loading projects:", err);
-            }
+            const { data: projects } = await supabase.from('projects').select('id, name').order('name');
+            const select = document.getElementById('billing-project');
+            select.innerHTML = '<option value="" selected disabled>-- Choose a Project --</option>';
+            (projects || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id; opt.textContent = p.name;
+                select.appendChild(opt);
+            });
         }
 
-        async function createBill() {
-            const role = await getCurrentRole();
-            if (!['admin', 'pm'].includes(role)) {
-                alert('You are not authorized to create billing statements.');
-                window.location.href = 'billing.html';
-                return;
-            }
+        async function createBilling() {
+            const projectId = document.getElementById('billing-project').value;
+            const billingType = document.getElementById('billing-type').value;
+            const amount = document.getElementById('billing-amount').value;
+            const description = document.getElementById('billing-description').value.trim() || null;
 
-            const projectId = document.getElementById('project-select').value;
-            const amount = document.getElementById('bill-amount').value;
-            const reason = document.getElementById('bill-reason').value;
-
-            if (!projectId || !amount) {
-                alert("Please provide both a project and an amount.");
-                return;
-            }
+            if (!projectId || !amount) { alert('Please select a project and enter an amount.'); return; }
 
             const btn = document.getElementById('submit-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div> Processing...';
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div> Issuing...';
             btn.disabled = true;
 
-            const { error } = await supabase
-                .from('billing')
-                .insert([
-                    {
-                        project_id: projectId,
-                        amount: parseFloat(amount),
-                        description: reason || null,
-                        status: 'unpaid'
-                    }
-                ]);
+            const amt = parseFloat(amount) || 0;
+            const { error } = await supabase.from('billing').insert([{
+                project_id: projectId, amount: amt, billing_type: billingType, description,
+                status: 'unpaid', date_issued: new Date().toISOString().slice(0, 10), balance_left: amt
+            }]);
 
             if (error) {
-                alert("Error: " + error.message);
+                alert('Error: ' + error.message);
                 btn.innerHTML = originalText;
                 btn.disabled = false;
-            } else {
-                alert("Statement Created Successfully!");
-                window.location.href = 'billing.html';
+                return;
             }
+            alert('Billing statement issued.');
+            window.location.href = 'billing.html';
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            if (!await enforceRole(['admin'], 'billing.html')) return;
             await loadProjectOptions();
         });
         // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
     </script>
 </body>
 </html>
-

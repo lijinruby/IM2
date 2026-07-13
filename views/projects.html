@@ -2,12 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Management — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=3">
+    <link rel="stylesheet" href="../assets/css/style.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
@@ -18,12 +16,17 @@
                 <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
             </div>
             <div class="mt-4 flex-grow-1">
-                <a href="dashboard.html" class="nav-item-custom"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
-                <a href="clients.html" class="nav-item-custom" data-role="admin"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
-                <a href="projects.html" class="nav-item-custom active" data-role="admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="payments.html" class="nav-item-custom" data-role="admin"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
-                <a href="projects.html" class="nav-item-custom active" data-role="pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="billing.html" class="nav-item-custom"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
+                <a href="projects.html" class="nav-item-custom active" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="projects.html" class="nav-item-custom active" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="projects.html" class="nav-item-custom active" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -36,7 +39,7 @@
                     <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
                     <h6 class="mb-0 fw-bold">Project Operations</h6>
                 </div>
-                <div class="badge rounded-pill bg-success px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+                <div class="badge rounded-pill px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
             </header>
 
             <main class="p-4 container-fluid">
@@ -46,21 +49,21 @@
                             <h2 class="fw-bold mb-2">Project Portfolio</h2>
                             <p class="opacity-75 mb-4" data-role="admin">Oversight of all active project records, contract values, and status.</p>
                             <p class="opacity-75 mb-4" data-role="pm">Track milestone progress, contract values, and client deliverables for your projects.</p>
-                            <!-- Project creation belongs to Project Managers, not Finance Admin. -->
-                            <a href="new-project.html" class="btn btn-amber shadow-sm" data-role="pm"><i class="bi bi-plus-square me-2"></i> New Project</a>
+                            <p class="opacity-75 mb-4" data-role="client">Your approved projects, their current status, and progress toward completion.</p>
+                            <div class="d-flex gap-2">
+                                <a href="new-project.html" class="btn btn-amber shadow-sm" data-role="pm"><i class="bi bi-plus-square me-2"></i> New Project</a>
+                                <a href="requests.html" class="btn btn-outline-light shadow-sm" data-role="client"><i class="bi bi-file-earmark-plus me-2"></i> Request a New Project</a>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row g-4 mb-5">
+                <div class="row g-4 mb-5" data-role="admin">
                     <div class="col-md-4">
                         <div class="card kpi-card p-4 border-0">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="kpi-icon bg-primary-subtle text-primary"><i class="bi bi-layers"></i></div>
-                                <div>
-                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Projects</small>
-                                    <h3 class="fw-bold mb-0" id="project-count">0</h3>
-                                </div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Projects</small><h3 class="fw-bold mb-0" id="project-count">0</h3></div>
                             </div>
                         </div>
                     </div>
@@ -68,10 +71,61 @@
                         <div class="card kpi-card p-4 border-0">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-currency-dollar"></i></div>
-                                <div>
-                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Contract Value</small>
-                                    <h3 class="fw-bold mb-0" id="total-contract-value">₱0.00</h3>
-                                </div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Contract Value</small><h3 class="fw-bold mb-0" id="total-contract-value">₱0.00</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-info-subtle text-info"><i class="bi bi-bar-chart-line"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Average Progress</small><h3 class="fw-bold mb-0" id="avg-progress">0%</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-5" data-role="pm">
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-primary-subtle text-primary"><i class="bi bi-layers"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">My Projects</small><h3 class="fw-bold mb-0" id="project-count-pm">0</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-currency-dollar"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Contract Value</small><h3 class="fw-bold mb-0" id="total-contract-value-pm">₱0.00</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-info-subtle text-info"><i class="bi bi-bar-chart-line"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Average Progress</small><h3 class="fw-bold mb-0" id="avg-progress-pm">0%</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-5" data-role="client">
+                    <div class="col-md-6">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-primary-subtle text-primary"><i class="bi bi-layers"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">My Projects</small><h3 class="fw-bold mb-0" id="project-count-client">0</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-info-subtle text-info"><i class="bi bi-bar-chart-line"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Average Progress</small><h3 class="fw-bold mb-0" id="avg-progress-client">0%</h3></div>
                             </div>
                         </div>
                     </div>
@@ -81,7 +135,7 @@
                     <div class="col-12">
                         <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
                             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0">Active Project List</h6>
+                                <h6 class="fw-bold mb-0">Project List</h6>
                                 <div class="input-group input-group-sm" style="width: 250px;">
                                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
                                     <input type="text" class="form-control bg-light border-start-0" id="projectSearch" placeholder="Search projects...">
@@ -93,18 +147,14 @@
                                         <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
                                             <th class="ps-4">Code</th>
                                             <th>Project Name</th>
-                                            <th>Client</th>
-                                            <th>Contract Amount</th>
-                                            <th class="text-end pe-4">Status</th>
+                                            <th data-role="admin">Client</th>
+                                            <th>Progress</th>
+                                            <th class="text-end">Status</th>
+                                            <th class="text-end pe-4">Details</th>
                                         </tr>
                                     </thead>
                                     <tbody id="projects-list">
-                                        <tr>
-                                            <td colspan="5" class="text-center py-5">
-                                                <div class="spinner-border text-primary spinner-border-sm me-2"></div>
-                                                <span class="text-muted">Loading active projects...</span>
-                                            </td>
-                                        </tr>
+                                        <tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading projects...</span></td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -115,11 +165,24 @@
         </div>
     </div>
 
+    <!-- Project Details Modal -->
+    <div class="modal fade" id="projectDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="projectDetailsTitle">Project Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="projectDetailsBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/auth.js?v=2"></script>
     <script>
         const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
         let allProjects = [];
-        console.log('projects.html inline script loaded');
 
         async function loadProjects() {
             const list = document.getElementById('projects-list');
@@ -127,120 +190,227 @@
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
 
-                // FIX: reading localStorage('userRole') here raced against auth.js's
-                // protectPage(), which also fetches the role and only THEN writes it
-                // to localStorage. Depending on timing, this code could read a stale
-                // or missing value and render read-only badges even for an admin/pm.
-                // Fetch the role directly from the DB so there's no race at all.
-                const { data: profile, error: profileErr } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .single();
-
-                if (profileErr) {
-                    console.error("Error fetching role:", profileErr);
-                }
-
-                const role = normalizeRole(profile?.role || localStorage.getItem('userRole') || 'client');
-                localStorage.setItem('userRole', role);
+                const role = await getCurrentRole();
+                window.currentUserId = user.id;
+                window.currentRole = role;
 
                 let query = supabase
                     .from('projects')
                     .select(`
-                        id,
-                        name,
-                        contract_amount,
-                        status,
-                        pm_id,
-                        clients ( name )
+                        id, name, contract_amount, additional_costs, status, progress_percentage,
+                        pm_id, client_id, location, description, project_type,
+                        notice_of_award_date, notice_to_proceed_date, working_days, completion_date,
+                        financial_admin_id,
+                        clients ( name ),
+                        pm:profiles!pm_id ( full_name ),
+                        financial_admin:profiles!financial_admin_id ( full_name )
                     `);
 
-                // Admin sees everything. PM sees only their own projects.
                 if (role === 'pm') {
                     query = query.eq('pm_id', user.id);
+                } else if (role === 'client') {
+                    const { data: profile } = await supabase.from('profiles').select('client_id').eq('id', user.id).single();
+                    if (!profile?.client_id) {
+                        list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">Your account isn\'t linked to a client company yet — ask an administrator to link your profile.</td></tr>';
+                        return;
+                    }
+                    query = query.eq('client_id', profile.client_id);
                 }
 
                 const { data: projects, error } = await query;
                 if (error) throw error;
 
                 allProjects = projects || [];
-                window.currentUserId = user.id;
-                window.currentRole = role;
-                console.log('projects.html loadProjects', { role, userId: user.id, projectCount: allProjects.length });
                 renderProjects(allProjects);
 
             } catch (err) {
                 console.error("Error loading projects:", err);
-                list.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger small">Error connecting to server.</td></tr>`;
+                list.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger small">Error connecting to server.</td></tr>`;
             }
+        }
+
+        function progressBar(pct) {
+            const p = Math.max(0, Math.min(100, pct || 0));
+            return `<div class="d-flex align-items-center gap-2" style="min-width:140px">
+                        <div class="progress-track flex-grow-1"><div class="progress-fill" style="width:${p}%"></div></div>
+                        <span class="small fw-bold text-muted" style="width:34px">${p}%</span>
+                    </div>`;
         }
 
         function renderProjects(projects) {
             const list = document.getElementById('projects-list');
             list.innerHTML = '';
-            let totalContract = 0;
+            let totalContract = 0, totalProgress = 0;
 
             if (!projects || projects.length === 0) {
-                list.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No active projects found in the database.</td></tr>';
-                document.getElementById('project-count').innerText = 0;
-                document.getElementById('total-contract-value').innerText = php.format(0);
-                return;
+                list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No projects found.</td></tr>';
             }
+
+            const role = normalizeRole(window.currentRole);
 
             projects.forEach(proj => {
                 const amt = parseFloat(proj.contract_amount) || 0;
                 totalContract += amt;
+                totalProgress += (proj.progress_percentage || 0);
 
                 const clientName = proj.clients ? proj.clients.name : '<span class="text-muted">No Client</span>';
-
-                // FIX: previously only a PM who was the EXACT pm_id match on that
-                // project could edit status — everyone else (including Admin) only
-                // saw a read-only badge. Admin now can edit ANY project's status,
-                // and a PM can still edit only their own.
-                const currentRole = normalizeRole(window.currentRole || localStorage.getItem('userRole') || 'client');
-                const canEdit =
-                    currentRole === 'admin' ||
-                    (currentRole === 'pm' && proj.pm_id === window.currentUserId);
+                const canEdit = role === 'admin' || (role === 'pm' && proj.pm_id === window.currentUserId);
 
                 const statusClass = `status-${proj.status || 'ongoing'}`;
-                const statusLabel = proj.status ? proj.status.replace('_', ' ').toUpperCase() : 'ONGOING';
                 const statusCell = canEdit
-                    ? `<div class="status-input-wrapper"><select id="status-select-${proj.id}" class="form-select form-select-sm status-select ${statusClass}" style="width: 150px;" onchange="updateProjectStatus('${proj.id}', this.value)">
-                            <option value="ongoing" ${proj.status === 'ongoing' ? 'selected' : ''}>ONGOING</option>
-                            <option value="on_hold" ${proj.status === 'on_hold' ? 'selected' : ''}>ON HOLD</option>
+                    ? `<div class="status-input-wrapper"><select class="form-select form-select-sm status-select ${statusClass}" style="width: 150px;" onchange="updateProjectStatus('${proj.id}', this.value)">
+                            <option value="planning" ${proj.status === 'planning' ? 'selected' : ''}>PLANNING</option>
+                            <option value="mobilization" ${proj.status === 'mobilization' ? 'selected' : ''}>MOBILIZATION</option>
+                            <option value="ongoing" ${(!proj.status || proj.status === 'ongoing' || proj.status === 'on_hold') ? 'selected' : ''}>ONGOING</option>
+                            <option value="for_review" ${proj.status === 'for_review' ? 'selected' : ''}>FOR REVIEW</option>
                             <option value="completed" ${proj.status === 'completed' ? 'selected' : ''}>COMPLETED</option>
+                            <option value="closed" ${proj.status === 'closed' ? 'selected' : ''}>CLOSED</option>
                         </select></div>`
-                    : `<span class="status-pill ${statusClass}">${statusLabel}</span>`;
+                    : `<span class="status-pill ${statusClass}">${statusLabel(proj.status).toUpperCase()}</span>`;
+
+                const clientCell = role === 'admin' ? `<td><div class="d-flex align-items-center gap-2"><i class="bi bi-building text-muted"></i><span>${clientName}</span></div></td>` : '';
 
                 list.innerHTML += `
                     <tr>
                         <td class="ps-4 fw-bold text-navy">PRJ-${proj.id.toString().slice(0, 4).toUpperCase()}</td>
                         <td><div class="fw-bold">${proj.name}</div></td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-building text-muted"></i>
-                                <span>${clientName}</span>
-                            </div>
+                        ${clientCell}
+                        <td>${progressBar(proj.progress_percentage)}</td>
+                        <td class="text-end">${statusCell}</td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-light btn-sm border" title="View Details" onclick="showProjectDetails('${proj.id}')"><i class="bi bi-eye"></i></button>
                         </td>
-                        <td class="fw-bold">${php.format(amt)}</td>
-                        <td class="text-end pe-4">${statusCell}</td>
                     </tr>
                 `;
             });
 
-            document.getElementById('project-count').innerText = projects.length;
-            document.getElementById('total-contract-value').innerText = php.format(totalContract);
+            document.getElementById('project-count') && (document.getElementById('project-count').innerText = projects.length);
+            document.getElementById('project-count-pm') && (document.getElementById('project-count-pm').innerText = projects.length);
+            document.getElementById('project-count-client') && (document.getElementById('project-count-client').innerText = projects.length);
+            document.getElementById('total-contract-value') && (document.getElementById('total-contract-value').innerText = php.format(totalContract));
+            document.getElementById('total-contract-value-pm') && (document.getElementById('total-contract-value-pm').innerText = php.format(totalContract));
+            const avg = projects.length ? Math.round(totalProgress / projects.length) : 0;
+            ['avg-progress', 'avg-progress-pm', 'avg-progress-client'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = avg + '%';
+            });
         }
 
         async function updateProjectStatus(projectId, newStatus) {
             const { error } = await supabase.from('projects').update({ status: newStatus }).eq('id', projectId);
-            if (error) {
-                alert("Error updating status: " + error.message);
-                return;
-            }
+            if (error) { alert("Error updating status: " + error.message); return; }
             const proj = allProjects.find(p => p.id === projectId);
             if (proj) proj.status = newStatus;
+        }
+
+        async function updateProjectProgress(projectId, newPct) {
+            const pct = Math.max(0, Math.min(100, parseInt(newPct) || 0));
+            const { error } = await supabase.from('projects').update({ progress_percentage: pct }).eq('id', projectId);
+            if (error) { alert("Error updating progress: " + error.message); return; }
+            const proj = allProjects.find(p => p.id === projectId);
+            if (proj) proj.progress_percentage = pct;
+            renderProjects(allProjects);
+        }
+
+        async function showProjectDetails(projectId) {
+            const proj = allProjects.find(p => p.id === projectId);
+            if (!proj) return;
+            const role = normalizeRole(window.currentRole);
+            const canEdit = role === 'admin' || (role === 'pm' && proj.pm_id === window.currentUserId);
+
+            document.getElementById('projectDetailsTitle').innerText = proj.name;
+
+            const clientName = proj.clients ? proj.clients.name : 'No Client';
+            const pmName = proj.pm ? proj.pm.full_name : 'Unassigned';
+            const faName = proj.financial_admin ? proj.financial_admin.full_name : 'Unassigned';
+
+            const progressControl = canEdit
+                ? `<div class="d-flex align-items-center gap-2">
+                       <input type="range" min="0" max="100" value="${proj.progress_percentage || 0}" id="progressRange-${proj.id}" class="form-range" style="width:160px" oninput="document.getElementById('progressVal-${proj.id}').innerText = this.value + '%'">
+                       <span id="progressVal-${proj.id}" class="fw-bold small" style="width:40px">${proj.progress_percentage || 0}%</span>
+                       <button class="btn btn-amber btn-sm" onclick="updateProjectProgress('${proj.id}', document.getElementById('progressRange-${proj.id}').value)">Save</button>
+                   </div>`
+                : progressBar(proj.progress_percentage);
+
+            document.getElementById('projectDetailsBody').innerHTML = `
+                <dl class="row small mb-4">
+                    <dt class="col-5 text-muted">Client</dt><dd class="col-7">${clientName}</dd>
+                    <dt class="col-5 text-muted">Project Manager</dt><dd class="col-7">${pmName}</dd>
+                    <dt class="col-5 text-muted">Financial Admin</dt><dd class="col-7">${faName}</dd>
+                    <dt class="col-5 text-muted">Location</dt><dd class="col-7">${proj.location || '—'}</dd>
+                    <dt class="col-5 text-muted">Description</dt><dd class="col-7">${proj.description || '—'}</dd>
+                    <dt class="col-5 text-muted">Payment Mode / Type</dt><dd class="col-7 text-capitalize">${(proj.project_type || '—').replace('_',' ')}</dd>
+                    <dt class="col-5 text-muted">Notice of Award</dt><dd class="col-7">${fmtDate(proj.notice_of_award_date)}</dd>
+                    <dt class="col-5 text-muted">Notice to Proceed</dt><dd class="col-7">${fmtDate(proj.notice_to_proceed_date)}</dd>
+                    <dt class="col-5 text-muted">Working Days</dt><dd class="col-7">${proj.working_days ?? '—'}</dd>
+                    <dt class="col-5 text-muted">Target Completion</dt><dd class="col-7">${fmtDate(proj.completion_date)}</dd>
+                    <dt class="col-5 text-muted">Project Cost</dt><dd class="col-7">${php.format(parseFloat(proj.contract_amount) || 0)}</dd>
+                    <dt class="col-5 text-muted">Additional Costs</dt><dd class="col-7">${php.format(parseFloat(proj.additional_costs) || 0)}</dd>
+                    <dt class="col-5 text-muted">Progress</dt><dd class="col-7">${progressControl}</dd>
+                </dl>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-folder2-open me-2"></i>Project Documents</h6>
+                    ${canEdit ? `<label class="btn btn-light btn-sm border mb-0">
+                        <i class="bi bi-upload me-1"></i> Upload
+                        <input type="file" id="docUpload-${proj.id}" class="d-none" onchange="uploadProjectDocument('${proj.id}', this.files[0])">
+                    </label>` : ''}
+                </div>
+                <div id="docsList-${proj.id}"><div class="text-muted small">Loading documents...</div></div>
+            `;
+            new bootstrap.Modal(document.getElementById('projectDetailsModal')).show();
+            loadProjectDocuments(proj.id, canEdit);
+        }
+
+        async function loadProjectDocuments(projectId, canEdit) {
+            const container = document.getElementById(`docsList-${projectId}`);
+            const { data: docs, error } = await supabase
+                .from('project_documents')
+                .select('id, doc_type, file_name, storage_path, uploaded_at')
+                .eq('project_id', projectId)
+                .order('uploaded_at', { ascending: false });
+
+            if (error) { container.innerHTML = '<div class="text-danger small">Could not load documents.</div>'; return; }
+            if (!docs || docs.length === 0) { container.innerHTML = '<div class="text-muted small">No documents uploaded yet.</div>'; return; }
+
+            container.innerHTML = docs.map(d => `
+                <div class="file-row">
+                    <div class="d-flex align-items-center gap-2 text-truncate">
+                        <i class="bi bi-file-earmark-text text-muted"></i>
+                        <div class="text-truncate">
+                            <div class="fw-semibold small text-truncate">${d.file_name}</div>
+                            <div class="text-muted" style="font-size:11px">${(d.doc_type || 'other').replace('_',' ')} · ${fmtDate(d.uploaded_at)}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm border" onclick="openFromBucket('project-documents','${d.storage_path}')"><i class="bi bi-download"></i></button>
+                        ${canEdit ? `<button class="btn btn-light btn-sm border text-danger" onclick="deleteProjectDocument('${d.id}','${projectId}',${canEdit})"><i class="bi bi-trash"></i></button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function uploadProjectDocument(projectId, file) {
+            if (!file) return;
+            try {
+                const path = await uploadToBucket('project-documents', projectId, file);
+                const { data: { user } } = await supabase.auth.getUser();
+                const { error } = await supabase.from('project_documents').insert([{
+                    project_id: projectId, file_name: file.name, storage_path: path, uploaded_by: user.id, doc_type: 'other'
+                }]);
+                if (error) throw error;
+                loadProjectDocuments(projectId, true);
+            } catch (err) {
+                alert('Upload failed: ' + err.message);
+            }
+        }
+
+        async function deleteProjectDocument(docId, projectId) {
+            if (!confirm('Delete this document?')) return;
+            const { data: doc } = await supabase.from('project_documents').select('storage_path').eq('id', docId).single();
+            await supabase.from('project_documents').delete().eq('id', docId);
+            if (doc?.storage_path) await supabase.storage.from('project-documents').remove([doc.storage_path]);
+            loadProjectDocuments(projectId, true);
         }
 
         document.getElementById('projectSearch').addEventListener('input', (e) => {
@@ -249,7 +419,7 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
-            if (!await enforceRole(['admin', 'pm'], 'dashboard.html')) return;
+            if (!await enforceRole(['admin', 'pm', 'client'], 'dashboard.html')) return;
             await loadProjects();
         });
         // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.

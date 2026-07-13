@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Requests — ALEK Consultants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css?v=4">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="role-loading">
+    <div class="shell">
+        <nav class="sidebar shadow" id="sidebar">
+            <div class="brand p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
+                <div class="brand-mark ms-1">A</div>
+                <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
+            </div>
+            <div class="mt-4 flex-grow-1">
+                <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="requests.html" class="nav-item-custom active" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="requests.html" class="nav-item-custom active" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+            </div>
+            <div class="p-3 border-top border-white border-opacity-10">
+                <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <header class="topbar px-4">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
+                    <h6 class="mb-0 fw-bold">Project Requests</h6>
+                </div>
+                <div class="badge rounded-pill px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+            </header>
+
+            <main class="p-4 container-fluid">
+                <div class="welcome-header shadow-sm border-0">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="fw-bold mb-2" data-role="client">Project Requests</h2>
+                            <h2 class="fw-bold mb-2" data-role="pm">Incoming Project Requests</h2>
+                            <p class="opacity-75 mb-4" data-role="client">Ask ALEK Consultants to start a new project, and track the status of requests you've already sent.</p>
+                            <p class="opacity-75 mb-4" data-role="pm">Review what clients are asking for. Approve a request to convert it into an active project, or reject it with a note.</p>
+                            <button class="btn btn-amber shadow-sm" data-role="client" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+                                <i class="bi bi-plus-lg me-2"></i> New Project Request
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4" data-role="pm">
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Pending Review</small><h3 class="fw-bold mb-0" id="req-pending-count">0</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-check2-circle"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Approved, Not Yet Converted</small><h3 class="fw-bold mb-0" id="req-approved-count">0</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-info-subtle text-info"><i class="bi bi-list-check"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Total Requests</small><h3 class="fw-bold mb-0" id="req-total-count">0</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-0">Requests</h6>
+                                <button class="btn btn-sm btn-light border" onclick="loadRequests()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light">
+                                        <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
+                                            <th class="ps-4">Title</th>
+                                            <th data-role="pm">Client</th>
+                                            <th>Type</th>
+                                            <th>Est. Budget</th>
+                                            <th>Preferred Start</th>
+                                            <th>Status</th>
+                                            <th class="text-end pe-4">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="requests-list">
+                                        <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading requests...</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- New Project Request Modal (Client) -->
+    <div class="modal fade" id="newRequestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Request a New Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="req-title" placeholder="Project Title">
+                        <label for="req-title">Project Title</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="req-location" placeholder="Location">
+                        <label for="req-location">Project Location</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select class="form-select" id="req-type">
+                            <option value="mobilization">Mobilization</option>
+                            <option value="progress" selected>Progress Billing</option>
+                            <option value="final">Final Billing</option>
+                            <option value="combination">Combination</option>
+                        </select>
+                        <label for="req-type">Project Type</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" id="req-description" placeholder="Description" style="height: 90px"></textarea>
+                        <label for="req-description">Project Description</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control" id="req-budget" placeholder="0.00">
+                        <label for="req-budget">Estimated Budget (PHP)</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="date" class="form-control" id="req-start-date">
+                        <label for="req-start-date">Preferred Start Date</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-amber" id="submit-request-btn" onclick="submitRequest()">Submit Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal (PM) -->
+    <div class="modal fade" id="reviewRequestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Review Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="row small mb-3" id="reviewRequestDetails"></dl>
+                    <div class="form-floating">
+                        <textarea class="form-control" id="review-notes" placeholder="Notes" style="height: 80px"></textarea>
+                        <label for="review-notes">Notes (optional, shown to the client)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-danger" id="reject-btn" onclick="reviewRequest('reject')">Reject</button>
+                    <button type="button" class="btn btn-amber" id="approve-btn" onclick="reviewRequest('approve')">Approve</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/auth.js?v=2"></script>
+    <script>
+        const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+        let allRequests = [];
+        let currentRequestId = null;
+
+        async function loadRequests() {
+            const list = document.getElementById('requests-list');
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const role = await getCurrentRole();
+                window.currentRole = role;
+
+                let query = supabase.from('project_requests').select(`
+                    id, title, location, project_type, description, estimated_budget, preferred_start_date,
+                    status, review_notes, converted_project_id, created_at,
+                    clients ( name )
+                `).order('created_at', { ascending: false });
+
+                if (role === 'client') {
+                    const { data: profile } = await supabase.from('profiles').select('client_id').eq('id', user.id).single();
+                    if (!profile?.client_id) {
+                        list.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">Your account isn\'t linked to a client company yet — ask an administrator to link your profile before submitting requests.</td></tr>';
+                        return;
+                    }
+                    query = query.eq('client_id', profile.client_id);
+                }
+                // PM sees all requests (no PM is assigned until after approval+conversion)
+
+                const { data: requests, error } = await query;
+                if (error) throw error;
+                allRequests = requests || [];
+                renderRequests(allRequests);
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger small">Error connecting to server.</td></tr>`;
+            }
+        }
+
+        function renderRequests(requests) {
+            const list = document.getElementById('requests-list');
+            const role = normalizeRole(window.currentRole);
+            list.innerHTML = '';
+
+            if (!requests || requests.length === 0) {
+                list.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">No project requests yet.</td></tr>';
+            }
+
+            let pending = 0, approvedUnconverted = 0;
+            requests.forEach(r => {
+                if (['pending', 'under_review'].includes(r.status)) pending++;
+                if (r.status === 'approved' && !r.converted_project_id) approvedUnconverted++;
+
+                const clientCell = role === 'pm' ? `<td>${r.clients ? r.clients.name : '—'}</td>` : '';
+                let actionCell = '<span class="text-muted small">—</span>';
+
+                if (role === 'pm' && ['pending', 'under_review'].includes(r.status)) {
+                    actionCell = `<button class="btn btn-amber btn-sm" onclick="openReview('${r.id}')">Review</button>`;
+                } else if (role === 'pm' && r.status === 'approved' && !r.converted_project_id) {
+                    actionCell = `<a href="new-project.html?request_id=${r.id}" class="btn btn-outline-success btn-sm">Create Project</a>`;
+                } else if (r.status === 'approved' && r.converted_project_id) {
+                    actionCell = `<a href="projects.html" class="btn btn-light btn-sm border">View Project</a>`;
+                } else if (r.review_notes) {
+                    actionCell = `<span class="text-muted small" title="${r.review_notes.replace(/"/g,'&quot;')}"><i class="bi bi-chat-left-text"></i> Note</span>`;
+                }
+
+                list.innerHTML += `
+                    <tr>
+                        <td class="ps-4"><div class="fw-bold">${r.title}</div><div class="text-muted small">${fmtDate(r.created_at)}</div></td>
+                        ${clientCell}
+                        <td class="text-capitalize">${(r.project_type || '—').replace('_',' ')}</td>
+                        <td>${r.estimated_budget ? php.format(r.estimated_budget) : '—'}</td>
+                        <td>${fmtDate(r.preferred_start_date)}</td>
+                        <td><span class="badge rounded-pill ${requestBadgeClass(r.status)} px-3 py-2">${requestStatusLabel(r.status).toUpperCase()}</span></td>
+                        <td class="text-end pe-4">${actionCell}</td>
+                    </tr>`;
+            });
+
+            document.getElementById('req-pending-count') && (document.getElementById('req-pending-count').innerText = pending);
+            document.getElementById('req-approved-count') && (document.getElementById('req-approved-count').innerText = approvedUnconverted);
+            document.getElementById('req-total-count') && (document.getElementById('req-total-count').innerText = requests.length);
+        }
+
+        async function submitRequest() {
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data: profile } = await supabase.from('profiles').select('client_id').eq('id', user.id).single();
+            if (!profile?.client_id) {
+                alert("Your account isn't linked to a client company yet — ask an administrator to link your profile.");
+                return;
+            }
+
+            const title = document.getElementById('req-title').value.trim();
+            const location = document.getElementById('req-location').value.trim() || null;
+            const project_type = document.getElementById('req-type').value;
+            const description = document.getElementById('req-description').value.trim() || null;
+            const budget = document.getElementById('req-budget').value || null;
+            const startDate = document.getElementById('req-start-date').value || null;
+
+            if (!title) { alert('Please enter a project title.'); return; }
+
+            const btn = document.getElementById('submit-request-btn');
+            btn.disabled = true;
+            btn.innerText = 'Submitting...';
+
+            const { error } = await supabase.from('project_requests').insert([{
+                client_id: profile.client_id, requested_by: user.id, title, location, project_type,
+                description, estimated_budget: budget ? parseFloat(budget) : null, preferred_start_date: startDate
+            }]);
+
+            btn.disabled = false;
+            btn.innerText = 'Submit Request';
+
+            if (error) { alert('Error: ' + error.message); return; }
+
+            bootstrap.Modal.getInstance(document.getElementById('newRequestModal')).hide();
+            document.getElementById('req-title').value = '';
+            document.getElementById('req-location').value = '';
+            document.getElementById('req-description').value = '';
+            document.getElementById('req-budget').value = '';
+            document.getElementById('req-start-date').value = '';
+            await loadRequests();
+        }
+
+        function openReview(requestId) {
+            currentRequestId = requestId;
+            const r = allRequests.find(x => x.id === requestId);
+            if (!r) return;
+            document.getElementById('reviewRequestDetails').innerHTML = `
+                <dt class="col-4 text-muted">Client</dt><dd class="col-8">${r.clients ? r.clients.name : '—'}</dd>
+                <dt class="col-4 text-muted">Title</dt><dd class="col-8">${r.title}</dd>
+                <dt class="col-4 text-muted">Location</dt><dd class="col-8">${r.location || '—'}</dd>
+                <dt class="col-4 text-muted">Type</dt><dd class="col-8 text-capitalize">${(r.project_type||'—').replace('_',' ')}</dd>
+                <dt class="col-4 text-muted">Description</dt><dd class="col-8">${r.description || '—'}</dd>
+                <dt class="col-4 text-muted">Est. Budget</dt><dd class="col-8">${r.estimated_budget ? php.format(r.estimated_budget) : '—'}</dd>
+                <dt class="col-4 text-muted">Preferred Start</dt><dd class="col-8">${fmtDate(r.preferred_start_date)}</dd>
+            `;
+            document.getElementById('review-notes').value = '';
+            new bootstrap.Modal(document.getElementById('reviewRequestModal')).show();
+        }
+
+        async function reviewRequest(action) {
+            if (!currentRequestId) return;
+            const notes = document.getElementById('review-notes').value.trim() || null;
+            const fn = action === 'approve' ? 'approve_project_request' : 'reject_project_request';
+            const { error } = await supabase.rpc(fn, { request_id: currentRequestId, review_notes_in: notes });
+            if (error) { alert('Error: ' + error.message); return; }
+            bootstrap.Modal.getInstance(document.getElementById('reviewRequestModal')).hide();
+            await loadRequests();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await enforceRole(['pm', 'client'], 'dashboard.html')) return;
+            await loadRequests();
+        });
+        // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
+    </script>
+</body>
+</html>
