@@ -246,14 +246,35 @@ async function login() {
 // database trigger (handle_new_user) also refuses to honor role: 'admin'
 // even if someone bypasses the UI and calls the API directly.
 async function signUp() {
-    const fullName = document.getElementById('signup-name').value;
-    const email = document.getElementById('signup-email').value;
+    const fullName = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
-    const role = document.getElementById('signup-role').value;
+    const roleEl = document.getElementById('signup-role');
+    const role = roleEl ? roleEl.value : 'client';
     const btn = document.querySelector('button[onclick="signUp()"]');
+
+    // Client account = Company account: for a client signup, the company
+    // fields below ARE the client record — no separate "Finance Admin
+    // creates the client" step exists anymore.
+    const companyNameEl = document.getElementById('signup-company-name');
+    const companyContactEl = document.getElementById('signup-company-contact');
+    const companyAddressEl = document.getElementById('signup-company-address');
+    const companyName = companyNameEl ? companyNameEl.value.trim() : '';
+    const companyContact = companyContactEl ? companyContactEl.value.trim() : '';
+    const companyAddress = companyAddressEl ? companyAddressEl.value.trim() : '';
 
     if (!fullName || !email || !password) {
         showMessage("Please fill in all fields.", "warning");
+        return;
+    }
+
+    if (role === 'client' && !companyName) {
+        showMessage("Please enter your company name.", "warning");
+        return;
+    }
+
+    if (companyContact && !isValidPhone(companyContact)) {
+        showMessage("Please enter a valid contact number.", "warning");
         return;
     }
 
@@ -266,7 +287,11 @@ async function signUp() {
         options: {
             data: {
                 full_name: fullName,
-                role: role
+                role: role,
+                company_name: role === 'client' ? companyName : null,
+                contact_number: role === 'client' ? companyContact : null,
+                address: role === 'client' ? companyAddress : null,
+                email: email
             }
         }
     });
@@ -348,3 +373,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+// ----------------------------------------------------------------------------
+// Shared input validation helpers.
+// Kept loose on purpose (basic shape-checking, not strict RFC validation) —
+// the goal is catching obvious typos (missing @, letters in a phone number),
+// not rejecting every legitimately unusual but valid input.
+// ----------------------------------------------------------------------------
+function isValidEmail(value) {
+    if (!value) return true; // empty is allowed where the field is optional
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function isValidPhone(value) {
+    if (!value) return true; // empty is allowed where the field is optional
+    // Digits, spaces, +, -, () only, at least 7 digits total.
+    const cleaned = value.trim();
+    if (!/^[0-9+\-()\s]+$/.test(cleaned)) return false;
+    return (cleaned.match(/[0-9]/g) || []).length >= 7;
+}
