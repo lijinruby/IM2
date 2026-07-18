@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clients — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=4">
+    <link rel="stylesheet" href="../assets/css/style.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
@@ -19,14 +19,16 @@
                 <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
                 <a href="clients.html" class="nav-item-custom active" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Proposals</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Consultations</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Proposals</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Consultations</span></a>
                 <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
                 <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="users.html" class="nav-item-custom" data-role="admin" id="nav-users"><i class="bi bi-person-badge"></i> <span class="nav-text">Users</span></a>
+                <a href="reports.html" class="nav-item-custom" id="nav-reports"><i class="bi bi-bar-chart"></i> <span class="nav-text">Reports</span></a>
+                <a href="profile.html" class="nav-item-custom" id="nav-profile"><i class="bi bi-person-circle"></i> <span class="nav-text">Profile</span></a>
+                <a href="settings.html" class="nav-item-custom" id="nav-settings"><i class="bi bi-gear"></i> <span class="nav-text">Settings</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -47,14 +49,12 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h2 class="fw-bold mb-2">Client Directory</h2>
-                            <p class="opacity-75 mb-4">View and manage all corporate partners and their assigned account managers.</p>
-                            <!-- FIX: this button used to do nothing. -->
-                            <a href="new-client.html" class="btn btn-amber shadow-sm" data-role="admin"><i class="bi bi-person-plus me-2"></i> Add New Client</a>
+                            <p class="opacity-75 mb-4">Every registered client account is a company record — clients enter their own company details at signup, so there's nothing to add here manually. You can still edit a company's details or reassign its account manager.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="row g-4 mb-5">
+                <div class="row g-3 mb-4">
                     <div class="col-md-4">
                         <div class="card kpi-card p-4">
                             <div class="d-flex align-items-center gap-3">
@@ -163,6 +163,9 @@
         let allClients = [];
         let allManagers = [];
 
+        // Client Directory is now sourced directly from Profiles — a client
+        // account IS the company record (client=company merge). No separate
+        // `clients` table exists anymore.
         async function loadClients() {
             const list = document.getElementById('clients-list');
             try {
@@ -174,16 +177,20 @@
                 allManagers = managers || [];
 
                 const { data: clients, error } = await supabase
-                    .from('clients')
+                    .from('profiles')
                     .select(`
                         id,
-                        name,
+                        company_name,
                         contact_number,
                         email,
                         address,
                         account_manager_id,
-                        profiles ( full_name )
-                    `);
+                        full_name,
+                        created_at,
+                        manager:account_manager_id ( full_name )
+                    `)
+                    .eq('role', 'client')
+                    .order('company_name');
 
                 if (error) throw error;
 
@@ -192,7 +199,7 @@
 
             } catch (err) {
                 console.error("Error loading clients:", err);
-                list.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">Error connecting to database.</td></tr>`;
+                list.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">Could not load clients: ${err.message || 'Unknown error'}</td></tr>`;
             }
         }
 
@@ -202,20 +209,23 @@
             let managedCount = 0;
 
             if (!clients || clients.length === 0) {
-                list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No clients registered in the system.</td></tr>';
+                list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No client accounts registered yet. Clients appear here automatically once they sign up.</td></tr>';
                 document.getElementById('client-count').innerText = 0;
                 document.getElementById('managed-count').innerText = 0;
                 return;
             }
 
             clients.forEach(client => {
-                const managerName = client.profiles ? client.profiles.full_name : '<span class="text-muted fst-italic">Unassigned</span>';
-                if (client.profiles) managedCount++;
+                const managerName = client.manager ? client.manager.full_name : '<span class="text-muted fst-italic">Unassigned</span>';
+                if (client.manager) managedCount++;
 
                 list.innerHTML += `
                     <tr>
                         <td class="ps-4 fw-bold text-navy">CLI-${client.id.toString().slice(0, 4).toUpperCase()}</td>
-                        <td><div class="fw-bold">${client.name}</div></td>
+                        <td>
+                            <div class="fw-bold">${client.company_name || client.full_name}</div>
+                            <div class="text-muted small">${client.full_name || ''}</div>
+                        </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-person-circle text-muted"></i>
@@ -225,7 +235,7 @@
                         <td><i class="bi bi-telephone me-2 text-muted small"></i>${client.contact_number || 'N/A'}</td>
                         <td class="text-muted small">${client.email || '—'}</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-light btn-sm border" title="Edit Client" onclick="openEditClient('${client.id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-light btn-sm border" title="Edit Company Details" onclick="openEditClient('${client.id}')"><i class="bi bi-pencil"></i></button>
                         </td>
                     </tr>
                 `;
@@ -240,7 +250,7 @@
             if (!c) return;
 
             document.getElementById('edit-client-id').value = c.id;
-            document.getElementById('edit-client-name').value = c.name || '';
+            document.getElementById('edit-client-name').value = c.company_name || '';
             document.getElementById('edit-client-contact').value = c.contact_number || '';
             document.getElementById('edit-client-email').value = c.email || '';
             document.getElementById('edit-client-address').value = c.address || '';
@@ -266,13 +276,15 @@
             const address = document.getElementById('edit-client-address').value.trim();
             const managerId = document.getElementById('edit-client-manager').value || null;
 
-            if (!name) { alert('Client name is required.'); return; }
+            if (!name) { alert('Company name is required.'); return; }
+            if (!isValidEmail(email)) { alert('Please enter a valid email address (e.g. name@company.com).'); return; }
+            if (!isValidPhone(contact)) { alert('Please enter a valid contact number (digits only, at least 7 digits).'); return; }
 
             const btn = document.getElementById('save-client-btn');
             btn.disabled = true; btn.innerText = 'Saving...';
 
-            const { error } = await supabase.from('clients').update({
-                name, contact_number: contact || null, email: email || null, address: address || null,
+            const { error } = await supabase.from('profiles').update({
+                company_name: name, contact_number: contact || null, email: email || null, address: address || null,
                 account_manager_id: managerId
             }).eq('id', id);
 
@@ -285,7 +297,7 @@
 
         document.getElementById('clientSearch').addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase();
-            renderClients(allClients.filter(c => c.name.toLowerCase().includes(q)));
+            renderClients(allClients.filter(c => (c.company_name || c.full_name || '').toLowerCase().includes(q)));
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
