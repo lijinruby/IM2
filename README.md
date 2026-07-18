@@ -129,12 +129,6 @@ See `ALEK_Consultants_ERD.pdf` for the visual diagram. This section walks
 through every table, field by field, and how they connect. `PK` = primary
 key, `FK` = foreign key (points to another table's `id`).
 
-> **Note:** `auth.users`, `profiles`, `roles`, `clients` (base fields),
-> `projects` (base fields), `billing` (base fields), and `payments` come from
-> the original base schema (`schema_alignment.sql`), not the workflow
-> migration. Everything from `consultation_requests` onward, plus the
-> additive columns called out below, comes from the workflow-completion
-> schema.
 
 ### auth.users
 Supabase's built-in authentication table. Every login account lives here;
@@ -324,10 +318,11 @@ statements; each statement can receive either a direct `payments` entry or
 a client-submitted `payment_proofs` claim that, once verified, also
 produces a `payments` row.
 
-Six `security definer` functions are the only sanctioned way to move a
-request into its "real" record: `confirm_project_request`,
+Eight `security definer` functions are the only sanctioned way to move a
+request into its "real" record, or to claim one: `confirm_project_request`,
 `decline_project_request`, `approve_billing_request`,
-`reject_billing_request`, `verify_payment_proof`, `reject_payment_proof`.
+`reject_billing_request`, `verify_payment_proof`, `reject_payment_proof`,
+and (added in §9) `claim_consultation_request`, `close_consultation_request`.
 Each re-checks the caller's role before doing anything, so the approval
 rule can't be bypassed by calling the underlying table directly.
 
@@ -462,3 +457,259 @@ get invalidated by the migration. The six spec statuses (Planning,
 Mobilization, Ongoing, For Review, Completed, Closed) are enforced at the
 UI level — the dropdown only offers those six — rather than at the
 database level.
+
+## 8. Changelog — fixes and additions (this revision)
+
+These are cumulative fixes and features added on top of the original
+redesign, in the order they came up. Some are frontend-only; several later
+ones (marked clearly below) needed matching database changes.
+
+> **Database setup:** every SQL change described in entries 9, 12, and 19
+> below has been consolidated into **`supabase/schema_final.sql`** — run
+> that ONE file (after `schema_alignment.sql`) instead of hunting for each
+> individual migration mentioned in the text. The entries below are kept
+> as-written for the history/reasoning; where they say "run this file,"
+> that specific file no longer exists on its own — it's folded into
+> `schema_final.sql` now. Two more files are NOT schema, and stay separate
+> because they're data operations you run only when you want them:
+> `supabase/clear_business_data.sql` (wipes business data, keeps accounts)
+> and `supabase/seed_dummy_data.sql` (demo data for testing/presentation).
+
+1. **`billing.html` — client no longer prompted to upload proof after a
+   statement is already settled.** The "Upload Proof of Payment" button used
+   to render unconditionally for every statement row, even ones already
+   `paid` (e.g. because Finance Admin recorded an offline payment directly).
+   It now shows a "Settled" indicator instead once `status = 'paid'` or
+   `balance_left <= 0`. Proof upload was always optional by design (see the
+   modal's own copy), this just stops the UI from implying it's still needed.
+
+2. **`billing.html` — Finance Admin had no way to reach direct statement
+   issuance.** `new-billing.html` (the "issue a statement without a PM
+   request first" form, meant for corrections/adjustments per §6) existed
+   but nothing linked to it for admins. Added an "Issue Statement Directly"
+   button, visible only to `admin`.
+
+3. **`dashboard.html` — "New Project" button was wrong for every role.** It
+   showed for all three roles and linked to `projects.html` (the list page),
+   not the actual create form — so even a PM clicking it didn't reach
+   `new-project.html`. Now restricted to `pm` and points at the correct
+   page; `admin` gets a "View Projects" link instead.
+
+4. **`style.css` — billing statement status pills had no color coding.**
+   `PAID` / `UNPAID` / `PARTIALLY_PAID` fell back to plain gray, unlike every
+   other status pill in the system. Added `.status-paid` (green),
+   `.status-unpaid` (red), `.status-partially_paid` (amber) rules consistent
+   with the existing palette.
+
+5. **`billing-requests.html` — a PM could request billing against a closed
+   project.** The "Choose a Project" dropdown loaded every project assigned
+   to the PM with no status filter, including `closed` ones (fully wrapped
+   up — billing included). Now excludes `status = 'closed'`. `completed` is
+   deliberately still included, since Final Billing normally happens *after*
+   completion (see fix 6).
+
+6. **`billing-requests.html` — Billing Type isn't locked for completed
+   projects.** When the selected project's status is `completed`, the
+   Billing Type dropdown now locks to `final` only (mobilization/progress/
+   other are disabled) and shows an inline explanation. This guides the PM
+   toward the correct billing type instead of leaving it open-ended once
+   the work itself is done.
+
+7. **`requests.html` — stale proposal data could leak between drafts.** The
+   "New Project Proposal" modal only cleared its fields (title, location,
+   description, budget, start date) *after* a successful submit — never on
+   open or on cancel. Opening it from a Consultation (which auto-fills the
+   description) and then cancelling, then opening it again for an unrelated
+   client, would carry the old text over. The modal now clears all fields
+   every time it opens, before applying any consultation-linked prefill.
+
+8. **`requests.html` — consultation requests had no assignment/claim logic.**
+   With multiple PMs, the Consultation Requests inbox was a fully shared,
+   unassigned list — any PM could "Mark Contacted" or "Create Proposal" on
+   any request, with no record of who actually picked it up (the schema's
+   own `handled_by` field existed but was never written to), risking two
+   engineers contacting the same client. Two things changed:
+   - "Mark Contacted" now claims the request — the first PM to claim it
+     locks its "Mark Contacted" / "Create Proposal" actions for every other
+     PM (both buttons show disabled, with a "Claimed by <name>" note).
+   - If the client already has a standing account manager (`clients.
+     account_manager_id`, set by admin in Add/Edit Client), that PM's copy
+     of the inbox tags the row "Your Client"; other PMs see "Preferred:
+     <name>" instead. This is a priority signal only, not a hard
+     restriction — if the preferred engineer is unavailable, any other PM
+     can still claim it. No new field was added to the client-facing
+     Request a Consultation form; this reuses the existing account manager
+     relationship.
+
+9. **`supabase/consultation_claim_hardening.sql` (new file) — the claim in
+   fix 8 is now enforced by the database, not just the UI.** The workflow-
+   completion schema's `consultation_requests_update` RLS policy only
+   checked `role = 'pm'`, with no restriction based on `handled_by` — so
+   the disabled buttons in fix 8 were cosmetic only; any PM could still call
+   `.update()` on the table directly and overwrite another PM's claim.
+   Separately, converting a consultation straight into a proposal (skipping
+   "Mark Contacted") closed the consultation without ever setting
+   `handled_by`, losing the attribution entirely. This migration adds two
+   `security definer` functions — `claim_consultation_request()` and
+   `close_consultation_request()` — following the same "one sanctioned
+   path" pattern already used for `approve_billing_request()` and
+   `confirm_project_request()`, and drops the open PM update policy so
+   these functions are the only way in. `requests.html`'s `markContacted()`
+   and `submitProposal()` now call these RPCs instead of writing to the
+   table directly. **Run `supabase/consultation_claim_hardening.sql` in the
+   Supabase SQL Editor after the workflow-completion schema for this to
+   take effect** — the frontend changes alone do nothing without it.
+
+10. **`style.css` + all KPI card rows — stat cards had oversized spacing.**
+    `.kpi-card` set `padding: 2rem 2.2rem` in the CSS while every instance
+    in the HTML *also* had Bootstrap's `p-4` (1.5rem) utility class on it —
+    the CSS rule won the cascade, so cards ended up bulkier than the markup
+    intended, and combined with the `g-4`/`mb-5` grid spacing (24px gutter +
+    48px bottom margin) made the whole stat-card grid look overly spread
+    out (this is what the PM dashboard screenshot showed). Reduced
+    `.kpi-card` padding to `1.35rem 1.6rem` and tightened every KPI grid
+    row site-wide (dashboard, projects, billing, clients, requests,
+    billing-requests) from `g-4 mb-5` to `g-3 mb-4`.
+
+11. **`signup.html` — public signup could create staff (PM) accounts.**
+    Anyone reaching the public signup page could self-register as a Project
+    Manager, not just a Client — no legitimate system should let internal
+    staff accounts be created through a page anyone can find. The role
+    dropdown is now hidden by default (public signup is Client-only). A
+    hidden staff mode (`signup.html?staff=1`) reveals a role picker with
+    Project Manager and Finance Admin options — this link is only exposed
+    from the new Users page (fix 13), for an existing Finance Admin to share
+    when onboarding a new staff member.
+
+12. **`supabase/user_management_and_proposal_edit.sql` (new file).** Two
+    additive RLS policies needed for fixes 13 and 15:
+    - `profiles_admin_manage`: lets `admin` update any profile's role,
+      name, or client link (needed for the Users page). Nothing previously
+      granted this — profile RLS from `schema_alignment.sql` is presumably
+      self-row-only, correct for a normal user but with no path for an
+      admin to manage *other* people's accounts.
+    - `project_requests_update_pm` / `project_requests_delete_pm`: lets a
+      PM edit or withdraw their **own** proposal while it's still
+      `pending` — deliberately excludes `confirmed`/`declined` proposals,
+      since the client has already acted on those as written. **Run this
+      file in the Supabase SQL Editor** (after the two prior migrations)
+      for fixes 13 and 15 to work — the frontend calls depend on it.
+
+13. **`views/users.html` (new page) — no way to see or manage system
+    accounts.** Lists every account (name, role, linked client company if
+    any) with counts by role. Admin can change a user's role or client link
+    from an edit modal. Includes the link to staff signup from fix 11.
+    Added to the sidebar nav (`data-role="admin"`) on all 10 pages that have
+    a sidebar. Note: the page can't show email addresses — `profiles`
+    doesn't store one (it lives in `auth.users`, not exposed to normal
+    client queries); would need an edge function or admin API to add safely.
+
+14. **`views/projects.html` — no way to retire a finished/cancelled
+    project.** Added an "Archive Project" button (`admin` only) in the
+    project details modal. Deliberately does **not** hard-delete — a
+    project is referenced by billing, documents, and payments, so removing
+    the row would orphan all of that. Archiving just sets `status =
+    'closed'` (already one of the six spec statuses) through the same
+    update path `saveProjectDetails` uses, so it inherits the same RLS.
+    (Editing a project's own fields was already fully supported before this
+    session — client, PM, location, dates, cost, etc. — that part of the
+    original "edit/delete projects" ask was already done.)
+
+15. **`views/requests.html` — a PM could not fix or pull back their own
+    proposal.** Previously proposals were create-only; a typo or a proposal
+    sent to the wrong client had no recovery besides asking the client to
+    decline it. Added, both restricted to the proposal's own author and
+    only while `status = 'pending'`:
+    - **Edit** — reopens the same "Prepare a Project Proposal" modal
+      pre-filled, and updates the existing row instead of creating a new
+      one.
+    - **Withdraw** — deletes the proposal outright. Safe as a hard delete
+      specifically because nothing else references a still-pending
+      proposal (no billing, no documents, no converted project) — once
+      confirmed/declined it becomes a historical record and neither button
+      is offered anymore.
+    Requires fix 12's SQL to be run first.
+
+16. **Input validation added on amount and contact-info fields**, previously
+    only checked for "not empty," not for being a sane value:
+    - `views/billing-requests.html`, `views/new-billing.html`,
+      `views/payments.html` (`recordPayment`) — billing/payment amounts
+      must now be a valid number greater than 0. (`payments.html`'s
+      `verifyProof` already had this check; it was inconsistent with the
+      other three amount fields in the system, now aligned.)
+    - `views/projects.html` (`saveProjectDetails`) — Project Cost,
+      Additional Costs, Working Days must be 0 or more; the `min="0"` HTML
+      attribute alone doesn't reliably block a pasted or programmatically
+      set negative value.
+    - `views/requests.html` (`submitProposal`) — Estimated Budget must be 0
+      or more.
+    - `views/new-client.html`, `views/clients.html` — email and contact
+      number now go through shared `isValidEmail()` / `isValidPhone()`
+      helpers (added to `assets/js/auth.js`) before save. Deliberately
+      loose (shape-checking, not strict RFC validation) — the goal is
+      catching obvious typos, not rejecting unusual-but-valid input.
+
+17. **`supabase/seed_dummy_data.sql` (new file) — demo data for
+    presentations/testing.** Split into two parts because `profiles.id` is
+    a foreign key to `auth.users.id` — there's no way to fabricate a fake
+    "user" via plain SQL, only through the real signup flow or an Auth
+    Admin API this frontend-only project doesn't have access to. **Part 1**
+    (run anytime) seeds five example client companies — no accounts needed.
+    **Part 2** is a template: sign up 3 real test accounts (client/PM/admin)
+    through the app first, paste their profile UUIDs into the three
+    placeholders in the script, then run it — it links the test client to a
+    seeded company, and creates one open consultation request, one
+    confirmed-and-converted proposal/project, one paid billing statement,
+    and one unpaid billing statement, so every role sees something on first
+    login instead of an empty dashboard.
+
+18. **`supabase/clear_business_data.sql` (new file) — reset script for
+    testing.** Deletes every business-data table in FK-safe order.
+    Deliberately does **not** touch `profiles` or `auth.users` — accounts
+    stay logged in and working; only business data is wiped. Deleting
+    accounts has to be done from Supabase's Authentication tab directly,
+    since `auth.users` isn't reachable from plain SQL the way the rest of
+    the schema is.
+
+    **Bugfixed after first real use:** the original version got the order
+    wrong in two places, both caught by a live "violates foreign key
+    constraint" error when actually run:
+    - `billing` and `billing_requests` reference **each other**
+      (`billing_requests.billing_id → billing.id`, AND
+      `billing.source_request_id → billing_requests.id`) — a circular FK.
+      No single delete order can satisfy that; both link columns have to be
+      set to `null` first to break the cycle, then both tables deleted.
+    - `project_requests.converted_project_id → projects.id` means
+      `project_requests` had to be deleted **before** `projects`, not
+      after — the original order had that backwards.
+    - Also added: `profiles.client_id → clients.id`. Since `profiles` rows
+      are deliberately kept (accounts stay), a client account still
+      pointing at a client row about to be deleted would hit the same kind
+      of error — that link is now nulled out before `clients` is deleted
+      (the account itself is unaffected, it just needs a new client company
+      linked afterward, e.g. from the Users page).
+
+19. **Payment Proof upload removed — payments are offline-only now.** The
+    schema's own comment on `payment_proofs` already called it optional
+    ("Spec module 8, Client Portal, **optional**"). It added real
+    complexity (three proof states, two extra RPCs, a storage bucket) for a
+    feature that was never required — the "Record Payment" flow alone
+    (Finance Admin manually enters amount + reference number,
+    `balance_left` updates automatically) already fully covers the
+    spec requirement. Removed:
+    - `views/billing.html` — the "Upload Proof of Payment" button/modal is
+      gone; the client's last table column is now a plain read-only
+      "Settled" / "Awaiting payment" indicator, nothing to act on.
+    - `views/payments.html` — the "Pending Proofs" tab is gone; Finance
+      Admin sees a single "All Recorded Payments" list with "Record
+      Payment," no tab navigation needed anymore.
+    - `supabase/retire_payment_proofs.sql` (new file) — drops the
+      `payment_proofs` table's SELECT/INSERT/UPDATE policies and its
+      storage bucket policies, so nothing can write to it even via a direct
+      API call bypassing the UI (same principle as
+      `consultation_claim_hardening.sql`: don't just hide a removed feature
+      in the UI, close it at the database too). The table itself and
+      `verify_payment_proof()` / `reject_payment_proof()` are left in
+      place, untouched — they're harmless with no INSERT policy feeding
+      them, and it means the feature is fully reversible later by
+      re-creating just those five policies.
