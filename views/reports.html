@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports — ALEK Consultants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css?v=5">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="role-loading">
+    <div class="shell">
+<nav class="sidebar shadow" id="sidebar">
+            <div class="brand p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
+                <div class="brand-mark ms-1">A</div>
+                <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
+            </div>
+            <div class="mt-4 flex-grow-1">
+                <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Consultations</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Consultations</span></a>
+                <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="users.html" class="nav-item-custom" data-role="admin" id="nav-users"><i class="bi bi-person-badge"></i> <span class="nav-text">Users</span></a>
+                <a href="reports.html" class="nav-item-custom active" id="nav-reports"><i class="bi bi-bar-chart"></i> <span class="nav-text">Reports</span></a>
+                <a href="profile.html" class="nav-item-custom" id="nav-profile"><i class="bi bi-person-circle"></i> <span class="nav-text">Profile</span></a>
+                <a href="settings.html" class="nav-item-custom" id="nav-settings"><i class="bi bi-gear"></i> <span class="nav-text">Settings</span></a>
+            </div>
+            <div class="p-3 border-top border-white border-opacity-10">
+                <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <header class="topbar px-4">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
+                    <h6 class="mb-0 fw-bold">Reports</h6>
+                </div>
+                <div class="badge rounded-pill px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+            </header>
+
+            <main class="p-4 container-fluid">
+                <div class="welcome-header shadow-sm border-0">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="fw-bold mb-2" id="reports-title">Reports</h2>
+                            <p class="opacity-75 mb-0" id="reports-subtitle">Loading your summary…</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4" id="reports-kpis"></div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                            <h6 class="fw-bold mb-3">Projects by Status</h6>
+                            <div id="reports-status-breakdown" class="text-muted small">Loading…</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6" data-role="admin">
+                        <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                            <h6 class="fw-bold mb-1">Reconciliation Check</h6>
+                            <p class="text-muted small mb-3">Billing statements where the recorded balance/status doesn't match what payments actually add up to. Should always be empty — the payments trigger keeps this reconciled automatically.</p>
+                            <div id="reports-reconciliation" class="small">Loading…</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../assets/js/auth.js?v=2"></script>
+    <script>
+        const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+
+        function kpiCard(icon, colorClass, label, value) {
+            return `<div class="col-md-4 col-lg-3">
+                <div class="card kpi-card p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="kpi-icon ${colorClass}"><i class="bi ${icon}"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold text-uppercase" style="font-size:10px">${label}</small>
+                            <h3 class="fw-bold mb-0">${value}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderStatusBreakdown(projects) {
+            const el = document.getElementById('reports-status-breakdown');
+            if (!projects || !projects.length) {
+                el.innerHTML = '<span class="text-muted">No projects yet.</span>';
+                return;
+            }
+            const counts = {};
+            projects.forEach(p => { counts[p.status || 'ongoing'] = (counts[p.status || 'ongoing'] || 0) + 1; });
+            const total = projects.length;
+            el.innerHTML = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([status, count]) => {
+                const pct = Math.round((count / total) * 100);
+                return `<div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center small mb-1">
+                        <span>${statusLabel(status)}</span>
+                        <span class="text-muted text-nowrap ms-2">${count} (${pct}%)</span>
+                    </div>
+                    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+                </div>`;
+            }).join('');
+        }
+
+        async function loadReports() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const role = await getCurrentRole();
+
+            if (role === 'admin') {
+                document.getElementById('reports-title').innerText = 'System Reports';
+                document.getElementById('reports-subtitle').innerText = 'Billing totals, collections, and project health across every client.';
+
+                const [{ data: billing }, { data: projects }] = await Promise.all([
+                    supabase.from('billing').select('amount, balance_left, status'),
+                    supabase.from('projects').select('status'),
+                ]);
+
+                let totalBilled = 0, totalCollected = 0, totalOutstanding = 0;
+                (billing || []).forEach(b => {
+                    const amt = parseFloat(b.amount) || 0;
+                    const bal = parseFloat(b.balance_left ?? amt) || 0;
+                    totalBilled += amt;
+                    totalOutstanding += bal;
+                    totalCollected += (amt - bal);
+                });
+
+                document.getElementById('reports-kpis').innerHTML =
+                    kpiCard('bi-cash-stack', 'bg-primary-subtle text-primary', 'Total Billed', php.format(totalBilled)) +
+                    kpiCard('bi-check-circle', 'bg-success-subtle text-success', 'Total Collected', php.format(totalCollected)) +
+                    kpiCard('bi-hourglass-split', 'bg-warning-subtle text-warning', 'Outstanding', php.format(totalOutstanding));
+
+                renderStatusBreakdown(projects);
+
+                const { data: drift, error: driftError } = await supabase.from('billing_reconciliation_check').select('*');
+                const reconEl = document.getElementById('reports-reconciliation');
+                if (driftError) {
+                    reconEl.innerHTML = '<span class="text-muted">Reconciliation view not available yet — run reconcile_payments.sql.</span>';
+                } else if (!drift || !drift.length) {
+                    reconEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Everything reconciles. No drift found.</span>';
+                } else {
+                    reconEl.innerHTML = drift.map(d => `<div class="mb-2 text-danger">${d.project_name}: recorded ${php.format(d.recorded_balance)} vs expected ${php.format(d.expected_balance)}</div>`).join('');
+                }
+
+            } else if (role === 'pm') {
+                document.getElementById('reports-title').innerText = 'My Project Reports';
+                document.getElementById('reports-subtitle').innerText = 'Your assigned projects and pending requests.';
+
+                const [{ data: projects }, { count: pendingProposals }] = await Promise.all([
+                    supabase.from('projects').select('status, contract_amount').eq('pm_id', user.id),
+                    supabase.from('project_requests').select('*', { count: 'exact', head: true }).eq('requested_by', user.id).eq('status', 'pending'),
+                ]);
+
+                const totalContract = (projects || []).reduce((s, p) => s + (parseFloat(p.contract_amount) || 0), 0);
+
+                document.getElementById('reports-kpis').innerHTML =
+                    kpiCard('bi-kanban', 'bg-primary-subtle text-primary', 'My Projects', (projects || []).length) +
+                    kpiCard('bi-cash-stack', 'bg-success-subtle text-success', 'Total Contract Value', php.format(totalContract)) +
+                    kpiCard('bi-hourglass-split', 'bg-warning-subtle text-warning', 'Pending Proposals', pendingProposals || 0);
+
+                renderStatusBreakdown(projects);
+                document.querySelector('[data-role="admin"]')?.remove();
+
+            } else {
+                document.getElementById('reports-title').innerText = 'My Reports';
+                document.getElementById('reports-subtitle').innerText = 'A summary of your projects and billing.';
+
+                const { data: projects } = await supabase.from('projects').select('id, status').eq('client_id', user.id);
+                const projectIds = (projects || []).map(p => p.id);
+
+                let totalBilled = 0, totalOutstanding = 0;
+                if (projectIds.length) {
+                    const { data: billing } = await supabase.from('billing').select('amount, balance_left').in('project_id', projectIds);
+                    (billing || []).forEach(b => {
+                        const amt = parseFloat(b.amount) || 0;
+                        totalBilled += amt;
+                        totalOutstanding += parseFloat(b.balance_left ?? amt) || 0;
+                    });
+                }
+
+                document.getElementById('reports-kpis').innerHTML =
+                    kpiCard('bi-kanban', 'bg-primary-subtle text-primary', 'My Projects', (projects || []).length) +
+                    kpiCard('bi-cash-stack', 'bg-success-subtle text-success', 'Total Billed', php.format(totalBilled)) +
+                    kpiCard('bi-hourglass-split', 'bg-warning-subtle text-warning', 'Outstanding Balance', php.format(totalOutstanding));
+
+                renderStatusBreakdown(projects);
+                document.querySelector('[data-role="admin"]')?.remove();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadReports);
+        // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
+    </script>
+</body>
+</html>
