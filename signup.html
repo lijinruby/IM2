@@ -6,7 +6,7 @@
     <title>Create Account — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=5">
 </head>
 <body class="auth-bg">
 
@@ -17,39 +17,85 @@
                     <div class="card-body">
                         <div class="auth-header">
                             <div class="brand-logo">A</div>
-                            <h4 class="fw-bold text-dark">Create Account</h4>
-                            <p>Register to request system access and manage billing workflows.</p>
+                            <h4 class="fw-bold text-dark" id="signup-title">Create Account</h4>
+                            <p id="signup-subtitle">Register your company to request engineering consultations and manage projects.</p>
                         </div>
 
                         <div id="auth-message" class="alert d-none mb-4" role="alert"></div>
 
-                        <div class="mb-3">
-                            <label for="signup-name" class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="signup-name" placeholder="John Doe" required>
+                        <!-- 1. ACCOUNT INFORMATION -->
+                        <div class="auth-section">
+                            <p class="auth-section-label">Account Information</p>
+
+                            <div class="mb-3">
+                                <label for="signup-name" class="form-label">Contact Person</label>
+                                <input type="text" class="form-control" id="signup-name" placeholder="e.g. Juan Dela Cruz" required>
+                            </div>
+
+                            <!--
+                                Public signup is Client-only by design: internal staff
+                                (PM / Finance Admin) shouldn't be able to self-register
+                                through a page anyone can reach. This block only appears
+                                when opened as signup.html?staff=1 — a link only shared by
+                                an existing Finance Admin from the Users page, not linked
+                                from anywhere in the public nav.
+                            -->
+                            <div class="mb-3 d-none" id="role-select-wrapper">
+                                <label for="signup-role" class="form-label">System Role</label>
+                                <select class="form-select" id="signup-role">
+                                    <option value="client">Client / Partner</option>
+                                    <option value="pm">Project Manager</option>
+                                    <option value="admin">Finance Admin</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-0">
+                                <label for="signup-email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="signup-email" placeholder="name@company.com" required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="signup-role" class="form-label">System Role</label>
-                            <select class="form-select" id="signup-role">
-                                <option value="client" selected>Client / Partner</option>
-                                <option value="pm">Project Manager</option>
-                            </select>
+                        <!--
+                            Client account = Company account: a client signup no
+                            longer just creates a login, it creates the company
+                            record too — Finance Admin never has to manually
+                            create a "client" separately. Hidden automatically
+                            for staff (PM/Finance Admin) signups, which have no
+                            company to attach.
+                        -->
+                        <div class="auth-section" id="company-fields-wrapper">
+                            <p class="auth-section-label">Company Information</p>
+                            <p class="small text-muted mb-3">Tell us about your company — this becomes your client record in our system.</p>
+
+                            <div class="mb-3">
+                                <label for="signup-company-name" class="form-label">Company Name</label>
+                                <input type="text" class="form-control" id="signup-company-name" placeholder="e.g. Maligaya Realty Corp" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="signup-company-address" class="form-label">Company Address</label>
+                                <input type="text" class="form-control" id="signup-company-address" placeholder="City, Province">
+                            </div>
+
+                            <div class="mb-0">
+                                <label for="signup-company-contact" class="form-label">Contact Number</label>
+                                <input type="tel" class="form-control" id="signup-company-contact" placeholder="+63 9XX XXX XXXX">
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="signup-email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="signup-email" placeholder="name@company.com" required>
+                        <!-- 3. SECURITY -->
+                        <div class="auth-section">
+                            <p class="auth-section-label">Security</p>
+                            <div class="mb-0 position-relative">
+                                <label for="signup-password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="signup-password" placeholder="Password" required>
+                                <button id="toggleSignupPassword" class="btn btn-sm btn-light position-absolute" type="button" style="right:14px;top:38px;border:none;padding:8px;border-radius:12px;">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="mb-4 position-relative">
-                            <label for="signup-password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="signup-password" placeholder="Password" required>
-                            <button id="toggleSignupPassword" class="btn btn-sm btn-light position-absolute" type="button" style="right:14px;top:38px;border:none;padding:8px;border-radius:12px;">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-
-                        <button onclick="signUp()" id="signupBtn" class="btn btn-amber w-100 fw-bold">
+                        <button onclick="signUp()" id="signupBtn" class="btn btn-amber w-100 fw-bold auth-submit">
                             Register Account <i class="fa-solid fa-chevron-right ms-2"></i>
                         </button>
 
@@ -68,5 +114,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/auth.js?v=2"></script>
+    <script>
+        function syncCompanyFieldsVisibility() {
+            const roleSelect = document.getElementById('signup-role');
+            const isStaff = roleSelect && roleSelect.value !== 'client';
+            const wrapper = document.getElementById('company-fields-wrapper');
+            const nameInput = document.getElementById('signup-company-name');
+            wrapper.classList.toggle('d-none', isStaff);
+            if (nameInput) nameInput.required = !isStaff;
+        }
+
+        if (new URLSearchParams(window.location.search).get('staff') === '1') {
+            document.getElementById('role-select-wrapper').classList.remove('d-none');
+            document.getElementById('signup-title').innerText = 'Staff Registration';
+            document.getElementById('signup-subtitle').innerText = 'Internal use only — for onboarding a new Project Manager or Finance Admin account.';
+            document.getElementById('signup-role').addEventListener('change', syncCompanyFieldsVisibility);
+            syncCompanyFieldsVisibility();
+        }
+    </script>
 </body>
 </html>
