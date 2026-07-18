@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — ALEK Consultants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css?v=5">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="role-loading">
+    <div class="shell">
+<nav class="sidebar shadow" id="sidebar">
+            <div class="brand p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
+                <div class="brand-mark ms-1">A</div>
+                <span class="brand-name text-white fw-bold fs-5 text-nowrap">ALEK Consultants</span>
+            </div>
+            <div class="mt-4 flex-grow-1">
+                <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Consultations</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Consultations</span></a>
+                <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
+                <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="users.html" class="nav-item-custom" data-role="admin" id="nav-users"><i class="bi bi-person-badge"></i> <span class="nav-text">Users</span></a>
+                <a href="reports.html" class="nav-item-custom" id="nav-reports"><i class="bi bi-bar-chart"></i> <span class="nav-text">Reports</span></a>
+                <a href="profile.html" class="nav-item-custom active" id="nav-profile"><i class="bi bi-person-circle"></i> <span class="nav-text">Profile</span></a>
+                <a href="settings.html" class="nav-item-custom" id="nav-settings"><i class="bi bi-gear"></i> <span class="nav-text">Settings</span></a>
+            </div>
+            <div class="p-3 border-top border-white border-opacity-10">
+                <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <header class="topbar px-4">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light border btn-sm me-3" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
+                    <h6 class="mb-0 fw-bold">Profile</h6>
+                </div>
+                <div class="badge rounded-pill px-3 py-2 text-uppercase" id="userRoleBadge">Loading...</div>
+            </header>
+
+            <main class="p-4 container-fluid" style="max-width: 900px;">
+                <div class="welcome-header shadow-sm border-0">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="fw-bold mb-2">My Profile</h2>
+                            <p class="opacity-75 mb-0" id="profile-subtitle">Your account details.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="profile-message" class="alert d-none"></div>
+
+                <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+                    <h6 class="fw-bold mb-3">Account</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Full Name</label>
+                            <input type="text" class="form-control" id="profile-full-name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">System Role</label>
+                            <input type="text" class="form-control" id="profile-role" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm p-4 mb-4" id="company-card" data-role="client" style="border-radius: 16px;">
+                    <h6 class="fw-bold mb-1">Company Details</h6>
+                    <p class="text-muted small mb-3">Your client account is your company account — this is what appears in ALEK's Client Directory.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Company Name</label>
+                            <input type="text" class="form-control" id="profile-company-name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Contact Number</label>
+                            <input type="tel" class="form-control" id="profile-contact-number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Company Email</label>
+                            <input type="email" class="form-control" id="profile-email">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Address</label>
+                            <input type="text" class="form-control" id="profile-address">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Account Manager</label>
+                            <input type="text" class="form-control" id="profile-account-manager" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-amber px-4" id="save-profile-btn" onclick="saveProfile()">Save Changes</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../assets/js/auth.js?v=2"></script>
+    <script>
+        let currentProfile = null;
+
+        async function loadProfile() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, role, company_name, contact_number, email, address, account_manager_id, manager:profiles!account_manager_id ( full_name )')
+                .eq('id', user.id)
+                .single();
+
+            if (error) {
+                document.getElementById('profile-message').className = 'alert alert-danger';
+                document.getElementById('profile-message').innerText = 'Could not load your profile: ' + error.message;
+                document.getElementById('profile-message').classList.remove('d-none');
+                return;
+            }
+
+            currentProfile = profile;
+            document.getElementById('profile-full-name').value = profile.full_name || '';
+            document.getElementById('profile-role').value = roleLabel(profile.role);
+
+            if (profile.role === 'client') {
+                document.getElementById('profile-subtitle').innerText = 'Your account and company details.';
+                document.getElementById('profile-company-name').value = profile.company_name || '';
+                document.getElementById('profile-contact-number').value = profile.contact_number || '';
+                document.getElementById('profile-email').value = profile.email || '';
+                document.getElementById('profile-address').value = profile.address || '';
+                document.getElementById('profile-account-manager').value = profile.manager ? profile.manager.full_name : 'Unassigned';
+            }
+        }
+
+        async function saveProfile() {
+            if (!currentProfile) return;
+            const fullName = document.getElementById('profile-full-name').value.trim();
+            if (!fullName) { alert('Full name is required.'); return; }
+
+            const updates = { full_name: fullName };
+
+            if (currentProfile.role === 'client') {
+                const companyName = document.getElementById('profile-company-name').value.trim();
+                const contact = document.getElementById('profile-contact-number').value.trim();
+                const email = document.getElementById('profile-email').value.trim();
+                const address = document.getElementById('profile-address').value.trim();
+
+                if (!companyName) { alert('Company name is required.'); return; }
+                if (!isValidEmail(email)) { alert('Please enter a valid email address.'); return; }
+                if (!isValidPhone(contact)) { alert('Please enter a valid contact number.'); return; }
+
+                updates.company_name = companyName;
+                updates.contact_number = contact || null;
+                updates.email = email || null;
+                updates.address = address || null;
+            }
+
+            const btn = document.getElementById('save-profile-btn');
+            btn.disabled = true; btn.innerText = 'Saving...';
+
+            const { error } = await supabase.from('profiles').update(updates).eq('id', currentProfile.id);
+
+            btn.disabled = false; btn.innerText = 'Save Changes';
+
+            const msg = document.getElementById('profile-message');
+            if (error) {
+                msg.className = 'alert alert-danger';
+                msg.innerText = 'Error: ' + error.message;
+            } else {
+                msg.className = 'alert alert-success';
+                msg.innerText = 'Profile updated.';
+                setTimeout(() => msg.classList.add('d-none'), 4000);
+            }
+            msg.classList.remove('d-none');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProfile);
+        // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
+    </script>
+</body>
+</html>
