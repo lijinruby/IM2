@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=4">
+    <link rel="stylesheet" href="../assets/css/style.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
@@ -17,16 +17,17 @@
             </div>
             <div class="mt-4 flex-grow-1">
                 <a href="dashboard.html" class="nav-item-custom active" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
-                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Proposals</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Consultations</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Proposals</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Consultations</span></a>
                 <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
                 <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="users.html" class="nav-item-custom" data-role="admin" id="nav-users"><i class="bi bi-person-badge"></i> <span class="nav-text">Users</span></a>
+                <a href="reports.html" class="nav-item-custom" id="nav-reports"><i class="bi bi-bar-chart"></i> <span class="nav-text">Reports</span></a>
+                <a href="profile.html" class="nav-item-custom" id="nav-profile"><i class="bi bi-person-circle"></i> <span class="nav-text">Profile</span></a>
+                <a href="settings.html" class="nav-item-custom" id="nav-settings"><i class="bi bi-gear"></i> <span class="nav-text">Settings</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -49,7 +50,8 @@
                             <h2 class="fw-bold mb-2" id="welcomeUser">Project Portfolio</h2>
                             <p class="opacity-75 mb-4" id="welcomeMessage">Track milestone progress, contract values, and client deliverables for your projects.</p>
                             <div class="d-flex gap-2 flex-wrap">
-                                <a href="projects.html" class="btn btn-amber">New Project</a>
+                                <a href="new-project.html" class="btn btn-amber" data-role="pm">New Project</a>
+                                <a href="projects.html" class="btn btn-amber" data-role="admin">View Projects</a>
                                 <a href="billing.html" class="btn btn-outline-light" data-role="client">Review Billing</a>
                                 <a href="requests.html" class="btn btn-outline-light" data-role="pm">Project Proposals</a>
                             </div>
@@ -57,7 +59,7 @@
                     </div>
                 </div>
 
-                <div class="row g-4 mb-5" data-role="admin">
+                <div class="row g-3 mb-4" data-role="admin">
                     <div class="col-md-4">
                         <div class="card kpi-card p-4">
                             <div class="d-flex align-items-center gap-3">
@@ -103,19 +105,19 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card kpi-card p-4">
+                        <div class="card kpi-card p-4" style="cursor:pointer" onclick="window.location.href='projects.html'">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="kpi-icon bg-warning-subtle text-warning"><i class="bi bi-inbox"></i></div>
+                                <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-cash-coin"></i></div>
                                 <div>
-                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Pending Billing Requests</small>
-                                    <h3 class="fw-bold mb-0" id="admin-pending-billing-requests">0</h3>
+                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Ready to Bill</small>
+                                    <h3 class="fw-bold mb-0" id="admin-ready-to-bill">0</h3>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row g-4 mb-5" data-role="pm">
+                <div class="row g-3 mb-4" data-role="pm">
                     <div class="col-md-6">
                         <div class="card kpi-card p-4">
                             <div class="d-flex align-items-center gap-3">
@@ -141,17 +143,6 @@
                     <div class="col-md-6">
                         <div class="card kpi-card p-4">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="kpi-icon bg-info-subtle text-info"><i class="bi bi-send"></i></div>
-                                <div>
-                                    <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Pending Billing Requests</small>
-                                    <h3 class="fw-bold mb-0" id="pm-pending-billing">0</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card kpi-card p-4">
-                            <div class="d-flex align-items-center gap-3">
                                 <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-bar-chart-line"></i></div>
                                 <div>
                                     <small class="text-muted fw-bold text-uppercase" style="font-size:10px">Average Project Progress</small>
@@ -162,7 +153,7 @@
                     </div>
                 </div>
 
-                <div class="row g-4 mb-5" data-role="client">
+                <div class="row g-3 mb-4" data-role="client">
                     <div class="col-md-6">
                         <div class="card kpi-card p-4">
                             <div class="d-flex align-items-center gap-3">
@@ -223,7 +214,7 @@
                         <div class="card border-0 shadow-sm p-4 text-white h-100" style="border-radius: 16px; background-color: var(--navy);">
                             <h6 class="fw-bold mb-3">Quick Support</h6>
                             <p class="small opacity-75">Need assistance with your billing or project timeline?</p>
-                            <button class="btn btn-outline-light w-100 mt-3 btn-sm" onclick="alert('Support requests aren\'t wired up yet — email support@alekconsultants.example for now.')">Contact Support</button>
+                            <a class="btn btn-outline-light w-100 mt-3 btn-sm" href="mailto:24101731@usc.edu.ph?subject=Support%20Request%20—%20ALEK%20Consultants%20Portal">Contact Support</a>
                         </div>
                     </div>
                 </div>
@@ -264,9 +255,9 @@
                     .not('status', 'in', '("completed","closed")');
                 document.getElementById('admin-active-projects').innerText = activeCount || 0;
 
-                const { count: pendingBillingReq } = await supabase
-                    .from('billing_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-                document.getElementById('admin-pending-billing-requests').innerText = pendingBillingReq || 0;
+                const { count: readyToBillCount } = await supabase
+                    .from('projects').select('*', { count: 'exact', head: true }).eq('billing_flagged', true);
+                document.getElementById('admin-ready-to-bill').innerText = readyToBillCount || 0;
             }
 
             else if (role === 'pm') {
@@ -284,50 +275,40 @@
                     .from('project_requests').select('*', { count: 'exact', head: true })
                     .eq('requested_by', user.id).eq('status', 'pending');
                 document.getElementById('pm-pending-requests').innerText = pendingReq || 0;
-
-                const { count: pendingBilling } = await supabase
-                    .from('billing_requests').select('*', { count: 'exact', head: true })
-                    .eq('requested_by', user.id).eq('status', 'pending');
-                document.getElementById('pm-pending-billing').innerText = pendingBilling || 0;
             }
 
             else if (role === 'client') {
-                const { data: profile } = await supabase.from('profiles').select('client_id').eq('id', user.id).single();
+                // Client account = company account: every client is automatically
+                // their own company, so there's no "linked yet?" check anymore.
+                const { data: projects } = await supabase.from('projects').select('id, status').eq('client_id', user.id);
+                const projectIds = (projects || []).map(p => p.id);
+                const activeProjects = (projects || []).filter(p => !['completed', 'closed'].includes(p.status));
+                document.getElementById('client-active-projects').innerText = activeProjects.length;
 
-                if (profile?.client_id) {
-                    const { data: projects } = await supabase.from('projects').select('id, status').eq('client_id', profile.client_id);
-                    const projectIds = (projects || []).map(p => p.id);
-                    const activeProjects = (projects || []).filter(p => !['completed', 'closed'].includes(p.status));
-                    document.getElementById('client-active-projects').innerText = activeProjects.length;
-
-                    if (projects && projects.length) {
-                        const counts = {};
-                        projects.forEach(p => { counts[p.status || 'ongoing'] = (counts[p.status || 'ongoing'] || 0) + 1; });
-                        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-                        document.getElementById('client-status').innerText = statusLabel(top[0]);
-                    } else {
-                        document.getElementById('client-status').innerText = 'No projects yet';
-                    }
-
-                    let balance = 0, paid = 0;
-                    if (projectIds.length) {
-                        const { data: clientBills } = await supabase.from('billing').select('amount, balance_left, status').in('project_id', projectIds);
-                        clientBills?.forEach(b => {
-                            const amt = parseFloat(b.amount) || 0;
-                            const bal = b.balance_left === null || b.balance_left === undefined
-                                ? (b.status.toLowerCase() === 'paid' ? 0 : amt)
-                                : parseFloat(b.balance_left) || 0;
-                            balance += bal;
-                            paid += (amt - bal);
-                        });
-                    }
-
-                    document.getElementById('client-balance').innerText = php.format(balance);
-                    document.getElementById('client-paid').innerText = php.format(paid);
+                if (projects && projects.length) {
+                    const counts = {};
+                    projects.forEach(p => { counts[p.status || 'ongoing'] = (counts[p.status || 'ongoing'] || 0) + 1; });
+                    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+                    document.getElementById('client-status').innerText = statusLabel(top[0]);
                 } else {
-                    document.getElementById('announcementText').innerHTML =
-                        "Your account isn't linked to a client company yet — ask an administrator to link your profile before you can request a consultation, confirm proposals, or view billing.";
+                    document.getElementById('client-status').innerText = 'No projects yet';
                 }
+
+                let balance = 0, paid = 0;
+                if (projectIds.length) {
+                    const { data: clientBills } = await supabase.from('billing').select('amount, balance_left, status').in('project_id', projectIds);
+                    clientBills?.forEach(b => {
+                        const amt = parseFloat(b.amount) || 0;
+                        const bal = b.balance_left === null || b.balance_left === undefined
+                            ? (b.status.toLowerCase() === 'paid' ? 0 : amt)
+                            : parseFloat(b.balance_left) || 0;
+                        balance += bal;
+                        paid += (amt - bal);
+                    });
+                }
+
+                document.getElementById('client-balance').innerText = php.format(balance);
+                document.getElementById('client-paid').innerText = php.format(paid);
             }
         }
 
