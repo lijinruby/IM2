@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payments — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=4">
+    <link rel="stylesheet" href="../assets/css/style.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body class="role-loading">
     <div class="shell">
@@ -17,16 +18,17 @@
             </div>
             <div class="mt-4 flex-grow-1">
                 <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
-                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Proposals</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Consultations</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Proposals</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Consultations</span></a>
                 <a href="billing.html" class="nav-item-custom" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
                 <a href="payments.html" class="nav-item-custom active" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="users.html" class="nav-item-custom" data-role="admin" id="nav-users"><i class="bi bi-person-badge"></i> <span class="nav-text">Users</span></a>
+                <a href="reports.html" class="nav-item-custom" id="nav-reports"><i class="bi bi-bar-chart"></i> <span class="nav-text">Reports</span></a>
+                <a href="profile.html" class="nav-item-custom" id="nav-profile"><i class="bi bi-person-circle"></i> <span class="nav-text">Profile</span></a>
+                <a href="settings.html" class="nav-item-custom" id="nav-settings"><i class="bi bi-gear"></i> <span class="nav-text">Settings</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -47,75 +49,34 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h2 class="fw-bold mb-2">Payments</h2>
-                            <p class="opacity-75 mb-4">Record payments against statements and verify proofs clients have uploaded.</p>
+                            <p class="opacity-75 mb-4">Record payments received offline (bank transfer, check, cash) against billing statements.</p>
                         </div>
                     </div>
                 </div>
 
-                <ul class="nav nav-pills mb-4" id="paymentsTabs">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-tab="proofs" onclick="switchTab('proofs')">
-                            Pending Proofs <span class="badge bg-warning text-dark ms-1" id="proofs-badge">0</span>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-tab="history" onclick="switchTab('history')">Payment History</button>
-                    </li>
-                </ul>
-
-                <div id="tab-proofs">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
-                                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">Client-Uploaded Proofs of Payment</h6>
-                                    <button class="btn btn-sm btn-light border" onclick="loadProofs()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-                                </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light">
-                                            <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
-                                                <th class="ps-4">Statement</th>
-                                                <th>Claimed Amount</th>
-                                                <th>File</th>
-                                                <th>Notes</th>
-                                                <th>Status</th>
-                                                <th class="text-end pe-4">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="proofs-list">
-                                            <tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading...</span></td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-0">All Recorded Payments</h6>
+                                <button class="btn btn-amber btn-sm" data-bs-toggle="modal" data-bs-target="#recordPaymentModal"><i class="bi bi-plus-lg me-1"></i> Record Payment</button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-history" class="d-none">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
-                                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">All Recorded Payments</h6>
-                                    <button class="btn btn-amber btn-sm" data-bs-toggle="modal" data-bs-target="#recordPaymentModal"><i class="bi bi-plus-lg me-1"></i> Record Payment</button>
-                                </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light">
-                                            <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
-                                                <th class="ps-4">Statement</th>
-                                                <th>Date Received</th>
-                                                <th>Amount Paid</th>
-                                                <th>Notes</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="payments-list">
-                                            <tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading...</span></td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light">
+                                        <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
+                                            <th class="ps-4">Receipt No.</th>
+                                            <th>Statement</th>
+                                            <th>Date Received</th>
+                                            <th>Amount Paid</th>
+                                            <th>Notes</th>
+                                            <th class="text-end pe-4">Receipt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="payments-list">
+                                        <tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading...</span></td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -133,6 +94,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-light border small mb-3" style="border-radius:10px;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        An <strong>Acknowledgement Receipt</strong> with a unique receipt number will be
+                        generated automatically once you save this — that number is the official record of
+                        this payment, so there's nothing to type in for it.
+                    </div>
                     <div class="form-floating mb-3">
                         <select class="form-select" id="pay-billing"><option value="">Loading statements...</option></select>
                         <label for="pay-billing">Billing Statement</label>
@@ -143,7 +110,7 @@
                     </div>
                     <div class="form-floating mb-3">
                         <input type="text" class="form-control" id="pay-reference" placeholder="Reference #">
-                        <label for="pay-reference">Payment Reference Number</label>
+                        <label for="pay-reference">External Reference (optional — check #, bank ref)</label>
                     </div>
                     <div class="form-floating">
                         <textarea class="form-control" id="pay-notes" placeholder="Notes" style="height: 80px"></textarea>
@@ -158,128 +125,50 @@
         </div>
     </div>
 
-    <!-- Verify Proof Modal -->
-    <div class="modal fade" id="verifyProofModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content" style="border-radius: 16px;">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Verify Proof of Payment</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <dl class="row small mb-3" id="verifyProofDetails"></dl>
-                    <div class="form-floating mb-3">
-                        <input type="number" class="form-control" id="verify-amount" placeholder="0.00">
-                        <label for="verify-amount">Amount to Record as Paid (PHP)</label>
-                    </div>
-                    <div class="form-floating">
-                        <textarea class="form-control" id="verify-notes" placeholder="Notes" style="height: 80px"></textarea>
-                        <label for="verify-notes">Notes</label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-outline-danger" onclick="rejectProof()">Reject</button>
-                    <button type="button" class="btn btn-amber" onclick="verifyProof()">Verify &amp; Record Payment</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/auth.js?v=2"></script>
     <script>
         const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
-        let allProofs = [];
-        let currentProofId = null;
+        const { jsPDF } = window.jspdf;
 
-        function switchTab(tab) {
-            document.querySelectorAll('#paymentsTabs .nav-link').forEach(el => el.classList.remove('active'));
-            document.querySelector(`#paymentsTabs [data-tab="${tab}"]`).classList.add('active');
-            document.getElementById('tab-proofs').classList.toggle('d-none', tab !== 'proofs');
-            document.getElementById('tab-history').classList.toggle('d-none', tab !== 'history');
-        }
-
-        async function loadProofs() {
-            const list = document.getElementById('proofs-list');
-            const { data: proofs, error } = await supabase
-                .from('payment_proofs')
-                .select('id, amount_claimed, file_name, storage_path, notes, status, created_at, billing_id, billing:billing ( id, amount, projects ( name ) )')
-                .order('created_at', { ascending: false });
-
-            if (error) { list.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger small">Error loading proofs.</td></tr>`; return; }
-
-            allProofs = proofs || [];
-            document.getElementById('proofs-badge').innerText = allProofs.filter(p => p.status === 'pending').length;
-
-            if (!allProofs.length) {
-                list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No proofs of payment uploaded yet.</td></tr>';
-                return;
-            }
-
-            list.innerHTML = allProofs.map(p => `
-                <tr>
-                    <td class="ps-4">${p.billing?.projects?.name || 'Unknown Project'} <div class="text-muted small">BS-${(p.billing_id||'').toString().slice(0,4).toUpperCase()}</div></td>
-                    <td class="fw-bold">${p.amount_claimed ? php.format(p.amount_claimed) : '—'}</td>
-                    <td><button class="btn btn-light btn-sm border" onclick="openFromBucket('payment-proofs','${p.storage_path}')"><i class="bi bi-file-earmark-arrow-down me-1"></i>${p.file_name}</button></td>
-                    <td class="text-muted small">${p.notes || '—'}</td>
-                    <td><span class="badge rounded-pill ${requestBadgeClass(p.status)} px-3 py-2">${requestStatusLabel(p.status).toUpperCase()}</span></td>
-                    <td class="text-end pe-4">${p.status === 'pending' ? `<button class="btn btn-amber btn-sm" onclick="openVerify('${p.id}')">Review</button>` : '<span class="text-muted small">—</span>'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function openVerify(proofId) {
-            currentProofId = proofId;
-            const p = allProofs.find(x => x.id === proofId);
-            if (!p) return;
-            document.getElementById('verifyProofDetails').innerHTML = `
-                <dt class="col-4 text-muted">Project</dt><dd class="col-8">${p.billing?.projects?.name || '—'}</dd>
-                <dt class="col-4 text-muted">Claimed Amount</dt><dd class="col-8">${p.amount_claimed ? php.format(p.amount_claimed) : '—'}</dd>
-                <dt class="col-4 text-muted">Client Notes</dt><dd class="col-8">${p.notes || '—'}</dd>
-            `;
-            document.getElementById('verify-amount').value = p.amount_claimed || '';
-            document.getElementById('verify-notes').value = '';
-            new bootstrap.Modal(document.getElementById('verifyProofModal')).show();
-        }
-
-        async function verifyProof() {
-            const amount = document.getElementById('verify-amount').value;
-            const notes = document.getElementById('verify-notes').value.trim() || null;
-            if (!amount || parseFloat(amount) <= 0) { alert('Enter a valid amount.'); return; }
-            const { error } = await supabase.rpc('verify_payment_proof', {
-                proof_id: currentProofId, verified_amount: parseFloat(amount), admin_notes: notes
-            });
-            if (error) { alert('Error: ' + error.message); return; }
-            bootstrap.Modal.getInstance(document.getElementById('verifyProofModal')).hide();
-            await loadProofs();
-            await loadPayments();
-        }
-
-        async function rejectProof() {
-            const notes = document.getElementById('verify-notes').value.trim() || null;
-            const { error } = await supabase.rpc('reject_payment_proof', { proof_id: currentProofId, admin_notes: notes });
-            if (error) { alert('Error: ' + error.message); return; }
-            bootstrap.Modal.getInstance(document.getElementById('verifyProofModal')).hide();
-            await loadProofs();
-        }
+        // Joined shape used both for the table list and for regenerating a
+        // receipt on demand ("Receipt" button per row).
+        const PAYMENT_SELECT = `
+            id, receipt_no, amount_paid, payment_date, notes, billing_id,
+            billing:billing (
+                id, amount, description,
+                projects (
+                    name,
+                    client:profiles!projects_client_id_fkey ( company_name, full_name )
+                )
+            ),
+            recorder:profiles!recorded_by ( full_name )
+        `;
 
         async function loadPayments() {
             const list = document.getElementById('payments-list');
             const { data: payments, error } = await supabase
                 .from('payments')
-                .select('id, amount_paid, payment_date, notes, billing_id, billing:billing ( projects ( name ) )')
+                .select(PAYMENT_SELECT)
                 .order('payment_date', { ascending: false });
 
-            if (error) { list.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger small">Error loading payments.</td></tr>`; return; }
-            if (!payments || !payments.length) { list.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No payments recorded yet.</td></tr>'; return; }
+            if (error) { list.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger small">Error loading payments.</td></tr>`; return; }
+            if (!payments || !payments.length) { list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No payments recorded yet.</td></tr>'; return; }
+
+            window._paymentsCache = payments;
 
             list.innerHTML = payments.map(p => `
                 <tr>
-                    <td class="ps-4">${p.billing?.projects?.name || 'Unknown Project'} <div class="text-muted small">BS-${(p.billing_id||'').toString().slice(0,4).toUpperCase()}</div></td>
+                    <td class="ps-4 fw-bold text-navy" style="font-family: var(--font-mono, monospace);">${p.receipt_no || '—'}</td>
+                    <td>${p.billing?.projects?.name || 'Unknown Project'} <div class="text-muted small">BS-${(p.billing_id||'').toString().slice(0,4).toUpperCase()}</div></td>
                     <td>${fmtDate(p.payment_date)}</td>
                     <td class="fw-bold text-success">${php.format(p.amount_paid)}</td>
                     <td class="text-muted small">${p.notes || '—'}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-light border btn-sm" onclick="downloadReceipt('${p.id}')" title="Download Acknowledgement Receipt">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                        </button>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -298,22 +187,133 @@
             });
         }
 
+        // Builds and triggers a download of the Acknowledgement Receipt PDF
+        // for a single joined payment record (see PAYMENT_SELECT shape).
+        function generateReceiptPDF(p) {
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            const navy = '#16233F';
+            const steel = '#5D7A94';
+            const charcoal = '#24262A';
+            const muted = '#6B6D70';
+            const pageW = doc.internal.pageSize.getWidth();
+            const marginX = 56;
+            let y = 64;
+
+            // Header
+            doc.setTextColor(navy);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text('ALEK Consultants', marginX, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(muted);
+            doc.text('Acknowledgement Receipt', marginX, y + 16);
+
+            doc.setFont('courier', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(navy);
+            doc.text(p.receipt_no || '—', pageW - marginX, y, { align: 'right' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(muted);
+            doc.text(fmtDate(p.payment_date), pageW - marginX, y + 16, { align: 'right' });
+
+            y += 34;
+            doc.setDrawColor(steel);
+            doc.setLineWidth(1);
+            doc.line(marginX, y, pageW - marginX, y);
+            y += 30;
+
+            const clientName = p.billing?.projects?.client?.company_name
+                || p.billing?.projects?.client?.full_name || '—';
+            const projectName = p.billing?.projects?.name || '—';
+            const statementRef = 'BS-' + (p.billing_id || '').toString().slice(0, 4).toUpperCase();
+            const recordedBy = p.recorder?.full_name || '—';
+
+            const row = (label, value) => {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(muted);
+                doc.text(label.toUpperCase(), marginX, y);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(charcoal);
+                doc.text(String(value), marginX, y + 16);
+                y += 42;
+            };
+
+            row('Received From (Client / Company)', clientName);
+            row('Project', projectName);
+            row('Billing Statement', statementRef);
+
+            // Amount — larger, boxed
+            doc.setFillColor('#EAF0F4');
+            doc.roundedRect(marginX, y - 6, pageW - marginX * 2, 56, 6, 6, 'F');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(muted);
+            doc.text('AMOUNT PAID', marginX + 16, y + 14);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(20);
+            doc.setTextColor(navy);
+            doc.text(php.format(p.amount_paid), marginX + 16, y + 38);
+            y += 76;
+
+            row('Payment Date', fmtDate(p.payment_date));
+            if (p.notes) row('Notes', p.notes);
+            row('Recorded By (Finance Admin)', recordedBy);
+
+            y += 20;
+            doc.setDrawColor('#DEDACF');
+            doc.line(marginX, y, pageW - marginX, y);
+            y += 20;
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(8);
+            doc.setTextColor(muted);
+            doc.text(
+                'This is an internal Acknowledgement Receipt generated automatically at the point of',
+                marginX, y
+            );
+            doc.text(
+                'recording and is not a BIR Official Receipt. Receipt number is unique and system-assigned.',
+                marginX, y + 12
+            );
+
+            doc.save(`${p.receipt_no || 'receipt'}.pdf`);
+        }
+
+        // Regenerates a receipt for an existing row (used by the per-row
+        // "PDF" button) — re-fetches so it always reflects the latest data.
+        async function downloadReceipt(paymentId) {
+            let payment = (window._paymentsCache || []).find(p => p.id === paymentId);
+            if (!payment) {
+                const { data, error } = await supabase.from('payments').select(PAYMENT_SELECT).eq('id', paymentId).single();
+                if (error || !data) { alert('Could not load that receipt.'); return; }
+                payment = data;
+            }
+            generateReceiptPDF(payment);
+        }
+
         async function recordPayment() {
             const billingId = document.getElementById('pay-billing').value;
             const amount = document.getElementById('pay-amount').value;
             const reference = document.getElementById('pay-reference').value.trim();
             const notes = document.getElementById('pay-notes').value.trim();
             if (!billingId || !amount) { alert('Please choose a statement and enter an amount.'); return; }
+            if (Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                alert('Amount must be a valid amount greater than 0.');
+                return;
+            }
 
-            const fullNotes = [reference ? `Ref: ${reference}` : null, notes || null].filter(Boolean).join(' — ') || null;
+            const fullNotes = [reference ? `External ref: ${reference}` : null, notes || null].filter(Boolean).join(' — ') || null;
 
             const btn = document.getElementById('record-payment-btn');
             btn.disabled = true; btn.innerText = 'Recording...';
 
             const { data: { user } } = await supabase.auth.getUser();
-            const { error } = await supabase.from('payments').insert([{
+            const { data: inserted, error } = await supabase.from('payments').insert([{
                 billing_id: billingId, amount_paid: parseFloat(amount), recorded_by: user.id, notes: fullNotes
-            }]);
+            }]).select(PAYMENT_SELECT).single();
 
             btn.disabled = false; btn.innerText = 'Record Payment';
             if (error) { alert('Error: ' + error.message); return; }
@@ -324,11 +324,14 @@
             document.getElementById('pay-notes').value = '';
             await loadBillingOptions();
             await loadPayments();
+
+            // Hand the Finance Admin a printable receipt immediately — this
+            // is what they hand the client on the spot.
+            if (inserted) generateReceiptPDF(inserted);
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await enforceRole(['admin'], 'dashboard.html')) return;
-            await loadProofs();
             await loadPayments();
             await loadBillingOptions();
         });
