@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Issue Billing Statement — ALEK Consultants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css?v=4">
+    <link rel="stylesheet" href="../assets/css/style.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
@@ -17,16 +17,17 @@
             </div>
             <div class="mt-4 flex-grow-1">
                 <a href="dashboard.html" class="nav-item-custom" id="nav-dashboard"><i class="bi bi-grid-1x2"></i> <span class="nav-text">Dashboard</span></a>
-                <a href="clients.html" class="nav-item-custom" data-role="admin" id="nav-clients"><i class="bi bi-people"></i> <span class="nav-text">Clients</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="admin" id="nav-projects-admin"><i class="bi bi-kanban"></i> <span class="nav-text">Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Project Proposals</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="pm" id="nav-requests-pm"><i class="bi bi-inbox"></i> <span class="nav-text">Consultations</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="pm" id="nav-projects-pm"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
                 <a href="projects.html" class="nav-item-custom" data-role="client" id="nav-projects-client"><i class="bi bi-folder-check"></i> <span class="nav-text">My Projects</span></a>
-                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Project Proposals</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="admin" id="nav-billing-requests"><i class="bi bi-inbox"></i> <span class="nav-text">Billing Requests</span></a>
-                <a href="billing-requests.html" class="nav-item-custom" data-role="pm" id="nav-billing-requests-pm"><i class="bi bi-send"></i> <span class="nav-text">Billing Requests</span></a>
+                <a href="requests.html" class="nav-item-custom" data-role="client" id="nav-requests-client"><i class="bi bi-file-earmark-plus"></i> <span class="nav-text">Consultations</span></a>
                 <a href="billing.html" class="nav-item-custom active" id="nav-billing"><i class="bi bi-file-earmark-text"></i> <span class="nav-text">Billing</span></a>
                 <a href="payments.html" class="nav-item-custom" data-role="admin" id="nav-payments"><i class="bi bi-credit-card"></i> <span class="nav-text">Payments</span></a>
+                <a href="users.html" class="nav-item-custom" data-role="admin" id="nav-users"><i class="bi bi-person-badge"></i> <span class="nav-text">Users</span></a>
+                <a href="reports.html" class="nav-item-custom" id="nav-reports"><i class="bi bi-bar-chart"></i> <span class="nav-text">Reports</span></a>
+                <a href="profile.html" class="nav-item-custom" id="nav-profile"><i class="bi bi-person-circle"></i> <span class="nav-text">Profile</span></a>
+                <a href="settings.html" class="nav-item-custom" id="nav-settings"><i class="bi bi-gear"></i> <span class="nav-text">Settings</span></a>
             </div>
             <div class="p-3 border-top border-white border-opacity-10">
                 <a href="#" onclick="logout()" class="nav-item-custom"><i class="bi bi-box-arrow-left"></i> <span class="nav-text">Logout</span></a>
@@ -47,7 +48,7 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h2 class="fw-bold mb-2">Issue Billing Statement</h2>
-                            <p class="opacity-75 mb-0">Direct issuance by Finance Admin — for example, an adjustment or a billing not tied to a Project Manager's request. Most statements should instead come through <a href="billing-requests.html" class="text-white text-decoration-underline">Billing Requests</a>, where the PM's request is reviewed first.</p>
+                            <p class="opacity-75 mb-0">Create an official billing statement for a project — mobilization, progress, final, or an adjustment. This becomes the client's outstanding balance immediately.</p>
                         </div>
                     </div>
                 </div>
@@ -104,6 +105,11 @@
                 opt.value = p.id; opt.textContent = p.name;
                 select.appendChild(opt);
             });
+
+            const preselectId = new URLSearchParams(window.location.search).get('project');
+            if (preselectId && projects?.some(p => p.id === preselectId)) {
+                select.value = preselectId;
+            }
         }
 
         async function createBilling() {
@@ -113,6 +119,10 @@
             const description = document.getElementById('billing-description').value.trim() || null;
 
             if (!projectId || !amount) { alert('Please select a project and enter an amount.'); return; }
+            if (Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                alert('Amount must be a valid amount greater than 0.');
+                return;
+            }
 
             const btn = document.getElementById('submit-btn');
             const originalText = btn.innerHTML;
@@ -131,6 +141,13 @@
                 btn.disabled = false;
                 return;
             }
+
+            // Close the loop: if this project was flagged "ready to bill" by
+            // its PM, clear the flag now that a statement has been issued.
+            await supabase.from('projects')
+                .update({ billing_flagged: false, billing_flag_note: null, billing_flagged_at: null })
+                .eq('id', projectId);
+
             alert('Billing statement issued.');
             window.location.href = 'billing.html';
         }
