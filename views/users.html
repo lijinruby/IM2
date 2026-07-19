@@ -48,14 +48,17 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h2 class="fw-bold mb-2">System Users</h2>
-                            <p class="opacity-75 mb-0">View every account in the system and manage staff roles. Everyone signs up as a Client first — to make someone a Project Manager or Finance Admin, find their account below and use <i class="bi bi-pencil mx-1"></i>Edit to change their role.</p>
+                            <p class="opacity-75 mb-0">View every account in the system, add new staff accounts, and manage roles. Client accounts are created by the client themselves (via signup); Project Manager and Finance Admin accounts are created here by you.</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="alert alert-light border small mb-4">
                     <i class="bi bi-info-circle me-2 text-primary"></i>
-                    New Project Managers and Finance Admins should sign up normally (as a Client) first, then have an existing Finance Admin promote their role here using the <i class="bi bi-pencil mx-1"></i>Edit button below — no separate registration needed.
+                    Use <i class="bi bi-person-plus mx-1"></i>Add User below to create a Project Manager or
+                    Finance Admin account directly — give the person the temporary password shown after
+                    creation so they can log in and change it. Client accounts aren't created here; clients
+                    sign up on their own so their company details get attached automatically.
                 </div>
 
                 <div class="row g-3 mb-4">
@@ -99,9 +102,14 @@
                         <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
                             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0">All Accounts</h6>
-                                <div class="input-group input-group-sm" style="width: 250px;">
-                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
-                                    <input type="text" class="form-control bg-light border-start-0" id="userSearch" placeholder="Search by name...">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <div class="input-group input-group-sm" style="width: 220px;">
+                                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control bg-light border-start-0" id="userSearch" placeholder="Search by name...">
+                                    </div>
+                                    <button class="btn btn-amber btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#addUserModal" onclick="openAddUserModal()">
+                                        <i class="bi bi-person-plus me-1"></i> Add User
+                                    </button>
                                 </div>
                             </div>
                             <div class="table-responsive">
@@ -128,6 +136,57 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 16px; border: none;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Staff Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="add-user-error" class="alert alert-danger small d-none"></div>
+                    <div id="add-user-success" class="d-none">
+                        <div class="alert alert-success small mb-3">
+                            <i class="bi bi-check-circle me-1"></i> Account created. Share these sign-in details with them directly — they won't be emailed automatically.
+                        </div>
+                        <dl class="row small mb-0">
+                            <dt class="col-4 text-muted">Email</dt><dd class="col-8" id="add-user-result-email"></dd>
+                            <dt class="col-4 text-muted">Temp password</dt><dd class="col-8" id="add-user-result-password" style="font-family: var(--font-mono, monospace);"></dd>
+                        </dl>
+                    </div>
+                    <div id="add-user-form-fields">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="add-user-name" placeholder="Full name">
+                            <label for="add-user-name">Full Name</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="add-user-email" placeholder="name@company.com">
+                            <label for="add-user-email">Email Address</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="add-user-role">
+                                <option value="pm">Project Manager</option>
+                                <option value="admin">Finance Admin</option>
+                            </select>
+                            <label for="add-user-role">System Role</label>
+                        </div>
+                        <label class="form-label small text-muted mb-1">Temporary Password</label>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" id="add-user-password" placeholder="Temporary password">
+                            <button class="btn btn-light border" type="button" onclick="generateTempPassword()"><i class="bi bi-arrow-repeat"></i> Generate</button>
+                        </div>
+                        <p class="small text-muted mb-0">They'll log in with this password and should change it from their Profile page afterward.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal" id="add-user-cancel-btn">Cancel</button>
+                    <button type="button" class="btn btn-amber" id="add-user-submit-btn" onclick="submitAddUser()">Create Account</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -173,6 +232,88 @@
     <script src="../assets/js/auth.js?v=2"></script>
     <script>
         let allUsers = [];
+
+        function generateTempPassword() {
+            // Not security-critical — this is a one-time password the staff
+            // member is told to change immediately after logging in.
+            const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let pw = '';
+            for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+            document.getElementById('add-user-password').value = pw;
+        }
+
+        function openAddUserModal() {
+            document.getElementById('add-user-error').classList.add('d-none');
+            document.getElementById('add-user-success').classList.add('d-none');
+            document.getElementById('add-user-form-fields').classList.remove('d-none');
+            document.getElementById('add-user-submit-btn').classList.remove('d-none');
+            document.getElementById('add-user-name').value = '';
+            document.getElementById('add-user-email').value = '';
+            document.getElementById('add-user-role').value = 'pm';
+            document.getElementById('add-user-cancel-btn').innerText = 'Cancel';
+            generateTempPassword();
+        }
+
+        async function submitAddUser() {
+            const name = document.getElementById('add-user-name').value.trim();
+            const email = document.getElementById('add-user-email').value.trim();
+            const role = document.getElementById('add-user-role').value;
+            const password = document.getElementById('add-user-password').value;
+            const errBox = document.getElementById('add-user-error');
+            errBox.classList.add('d-none');
+
+            if (!name) { errBox.textContent = 'Please enter a full name.'; errBox.classList.remove('d-none'); return; }
+            if (!email || !email.includes('@')) { errBox.textContent = 'Please enter a valid email address.'; errBox.classList.remove('d-none'); return; }
+            if (!password || password.length < 6) { errBox.textContent = 'Temporary password must be at least 6 characters.'; errBox.classList.remove('d-none'); return; }
+
+            const btn = document.getElementById('add-user-submit-btn');
+            btn.disabled = true; btn.innerText = 'Creating...';
+
+            // IMPORTANT: use a throwaway client with persistSession/autoRefreshToken
+            // OFF for the signup call. Calling auth.signUp() on the normal shared
+            // `supabase` client would sign the browser in as the NEW user and kick
+            // the Finance Admin out of their own session. createAuthOnlyClient()
+            // (defined in auth.js) never touches localStorage, so it can't affect
+            // the admin's session at all.
+            const tempClient = createAuthOnlyClient();
+
+            const { data: signUpData, error: signUpError } = await tempClient.auth.signUp({
+                email, password,
+                options: { data: { full_name: name, role: role === 'admin' ? 'pm' : role } }
+                // NOTE: role metadata is always sent as 'pm' or 'client' here —
+                // handle_new_user() intentionally blocks a self-registered
+                // 'admin' at the trigger level as a safety net. If Finance
+                // Admin actually chose "Finance Admin" above, we promote the
+                // row to admin right after, below, using OUR OWN authenticated
+                // session (which is allowed to set any role).
+            });
+
+            if (signUpError) {
+                btn.disabled = false; btn.innerText = 'Create Account';
+                errBox.textContent = signUpError.message.includes('already registered')
+                    ? 'An account with that email already exists.'
+                    : 'Error: ' + signUpError.message;
+                errBox.classList.remove('d-none');
+                return;
+            }
+
+            const newUserId = signUpData?.user?.id;
+            if (newUserId && role === 'admin') {
+                // Force the real intended role using the Finance Admin's own
+                // session (profiles_admin_manage policy allows this).
+                await supabase.from('profiles').update({ role: 'admin' }).eq('id', newUserId);
+            }
+
+            btn.disabled = false; btn.innerText = 'Create Account';
+            document.getElementById('add-user-form-fields').classList.add('d-none');
+            btn.classList.add('d-none');
+            document.getElementById('add-user-cancel-btn').innerText = 'Done';
+            document.getElementById('add-user-result-email').innerText = email;
+            document.getElementById('add-user-result-password').innerText = password;
+            document.getElementById('add-user-success').classList.remove('d-none');
+
+            await loadUsers();
+        }
 
         async function loadUsers() {
             const list = document.getElementById('users-list');
