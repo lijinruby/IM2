@@ -3,7 +3,7 @@
    Direction: premium minimalist / architectural / Swiss-engineering.
    Warm white surfaces, concrete grays, deep navy + muted steel-blue accents,
    charcoal type. Monospace used deliberately for data, labels and
-   coordinates.
+   coordinates — a nod to technical drawings and survey annotation.
    ========================================================================== */
 
 /* --- Imports --- */
@@ -17,14 +17,14 @@
     --surface: #FFFFFF;         /* card / panel surfaces */
     --concrete: #EFECE5;        /* soft concrete surface (sidebar, subtle fills) */
     --concrete-line: #DEDACF;   /* dividers, hairlines */
-    --navy: #16233F;            /* deep navy â€” primary accent */
+    --navy: #16233F;            /* deep navy — primary accent */
     --navy-2: #223259;          /* navy hover / lighter step */
     --charcoal: #24262A;        /* primary text */
     --charcoal-soft: #6B6D70;   /* secondary / muted text */
     --steel: #5D7A94;           /* muted steel-blue highlight */
     --steel-tint: #EAF0F4;      /* steel background tint */
 
-    /* Status vocabulary â€” deliberately desaturated */
+    /* Status vocabulary — deliberately desaturated */
     --ok: #3E6659;
     --ok-tint: #E8EFEC;
     --warn: #8C6D3F;
@@ -93,7 +93,7 @@ small, .text-muted {
     color: var(--charcoal-soft) !important;
 }
 
-/* Eyebrow / coordinate-style monospace labels â€” the signature device */
+/* Eyebrow / coordinate-style monospace labels — the signature device */
 .eyebrow,
 .text-eyebrow {
     font-family: var(--mono);
@@ -200,7 +200,7 @@ body.role-client th[data-role="client"] {
     font-weight: 500;
 }
 
-/* Welcome / hero header â€” architectural, blueprint corner marks */
+/* Welcome / hero header — architectural, blueprint corner marks */
 .welcome-header {
     position: relative;
     background: var(--navy);
@@ -394,8 +394,8 @@ body.role-client th[data-role="client"] {
     margin-right: 0;
 }
 
-/* Outline buttons placed on a dark (navy) surface â€” e.g. the Quick
-   Support card â€” need the transparent/light-on-dark treatment, not the
+/* Outline buttons placed on a dark (navy) surface — e.g. the Quick
+   Support card — need the transparent/light-on-dark treatment, not the
    default white-fill version meant for light backgrounds. */
 .text-white .btn-outline-light,
 .bg-dark .btn-outline-light {
@@ -436,8 +436,8 @@ body.role-client th[data-role="client"] {
 /* --- Modals ---
    Bootstrap's default modal chrome (sharp shadow, no border, bold dt/dd
    pairs) didn't match the rest of the app. Styling it centrally here means
-   every modal â€” project details, new client, new billing request, proof
-   upload, etc. â€” picks up the same look automatically. */
+   every modal — project details, new client, new billing request, proof
+   upload, etc. — picks up the same look automatically. */
 .modal-content {
     border-radius: var(--radius-m) !important;
     border: 1px solid var(--concrete-line);
@@ -474,7 +474,7 @@ body.role-client th[data-role="client"] {
 }
 
 /* Label / value "spec sheet" pairs (project details, read-only summaries)
-   â€” hairline rules between rows, monospace uppercase labels, in keeping
+   — hairline rules between rows, monospace uppercase labels, in keeping
    with the blueprint-annotation language used throughout. */
 dl.row {
     margin-bottom: 0;
@@ -965,7 +965,7 @@ dl.row textarea {
 }
 
 /* Section labels ("Account Information" / "Company Information" /
-   "Security") â€” small-caps eyebrow with a hairline underneath, so the form
+   "Security") — small-caps eyebrow with a hairline underneath, so the form
    reads as distinct steps instead of one long, undifferentiated column. */
 .auth-section {
     margin-bottom: 2.25rem;
@@ -1146,7 +1146,7 @@ dl.row textarea {
 }
 
 /* ==========================================================================
-   UI Modernization pass â€” softer shadows, glass accents, more breathing
+   UI Modernization pass — softer shadows, glass accents, more breathing
    room. Additive on top of the design system above; nothing here removes
    or overrides the base palette, it just adds the "premium" surface finish
    the spec asks for (soft shadows, glassmorphism accents, extra whitespace).
@@ -1168,7 +1168,7 @@ dl.row textarea {
     transform: translateY(-1px);
 }
 
-/* Glassmorphism accents â€” used sparingly, on the topbar and sidebar, so the
+/* Glassmorphism accents — used sparingly, on the topbar and sidebar, so the
    frosted-glass effect reads as a deliberate accent rather than the whole
    interface's material. */
 .topbar {
