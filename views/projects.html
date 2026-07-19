@@ -231,7 +231,7 @@
             const p = Math.max(0, Math.min(100, pct || 0));
             return `<div class="d-flex align-items-center gap-2" style="min-width:140px">
                         <div class="progress-track flex-grow-1"><div class="progress-fill" style="width:${p}%"></div></div>
-                        <span class="small fw-bold text-muted" style="width:34px">${p}%</span>
+                        <span class="small fw-bold text-muted text-nowrap flex-shrink-0" style="min-width:34px">${p}%</span>
                     </div>`;
         }
 
@@ -371,6 +371,14 @@
                 }).join('') || '<option value="">No PMs available</option>';
             }
 
+            // Closed + fully paid = nothing left to bill. Used below to block
+            // "Flag as Ready to Bill" once both are true.
+            const { data: projBilling } = await supabase.from('billing').select('status, balance_left, amount').eq('project_id', projectId);
+            const hasBilling = !!(projBilling && projBilling.length);
+            const fullyPaid = hasBilling && projBilling.every(b => b.status === 'paid' || (parseFloat(b.balance_left ?? b.amount) || 0) <= 0);
+            const nothingLeftToBill = proj.status === 'closed' && fullyPaid;
+
+
             const formatInputDate = (value) => {
                 if (!value) return '';
                 const d = new Date(value);
@@ -400,13 +408,17 @@
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
                             <div class="fw-bold small mb-1"><i class="bi bi-cash-coin me-1"></i>Billing</div>
-                            <div class="text-muted small">${proj.billing_flagged ? `Flagged ready to bill${proj.billing_flagged_at ? ' on ' + fmtDate(proj.billing_flagged_at) : ''}. Finance Admin has been signaled.` : 'Let Finance Admin know this project is ready to be billed.'}</div>
+                            <div class="text-muted small">${
+                                nothingLeftToBill
+                                    ? 'This project is closed and already fully paid — nothing left to bill.'
+                                    : (proj.billing_flagged ? `Flagged ready to bill${proj.billing_flagged_at ? ' on ' + fmtDate(proj.billing_flagged_at) : ''}. Finance Admin has been signaled.` : 'Let Finance Admin know this project is ready to be billed.')
+                            }</div>
                         </div>
-                        ${proj.billing_flagged
+                        ${nothingLeftToBill && !proj.billing_flagged ? '' : (proj.billing_flagged
                             ? `<button class="btn btn-light btn-sm border flex-shrink-0" onclick="setBillingFlag('${proj.id}', false)">Unflag</button>`
-                            : `<button class="btn btn-amber btn-sm flex-shrink-0" onclick="setBillingFlag('${proj.id}', true)">Flag as Ready to Bill</button>`}
+                            : `<button class="btn btn-amber btn-sm flex-shrink-0" onclick="setBillingFlag('${proj.id}', true)">Flag as Ready to Bill</button>`)}
                     </div>
-                    ${!proj.billing_flagged ? `<textarea class="form-control form-control-sm mt-2" id="billing-flag-note-${proj.id}" placeholder="Optional note for Finance Admin (e.g. amount, billing type)" rows="2">${proj.billing_flag_note || ''}</textarea>` : (proj.billing_flag_note ? `<div class="small text-muted mt-2 fst-italic">"${proj.billing_flag_note}"</div>` : '')}
+                    ${(!proj.billing_flagged && !nothingLeftToBill) ? `<textarea class="form-control form-control-sm mt-2" id="billing-flag-note-${proj.id}" placeholder="Optional note for Finance Admin (e.g. amount, billing type)" rows="2">${proj.billing_flag_note || ''}</textarea>` : (proj.billing_flag_note ? `<div class="small text-muted mt-2 fst-italic">"${proj.billing_flag_note}"</div>` : '')}
                 </div>` : ''}
                 ${role === 'admin' && proj.billing_flagged ? `
                 <div class="alert alert-success d-flex justify-content-between align-items-center small mb-3">
