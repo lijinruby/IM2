@@ -302,7 +302,15 @@
             }
 
             if (requestId && newProject) {
-                await supabase.from('project_requests').update({ converted_project_id: newProject.id }).eq('id', requestId);
+                const { error: linkError, data: linkedRows } = await supabase
+                    .from('project_requests')
+                    .update({ converted_project_id: newProject.id })
+                    .eq('id', requestId)
+                    .select();
+                if (linkError || !linkedRows || !linkedRows.length) {
+                    console.error('Could not link proposal to new project:', linkError);
+                    alert('Project was created, but linking it back to the original proposal failed — that proposal may keep showing "Create Project". This is harmless (no duplicate will be created), but let Finance Admin know so it can be fixed in the database.');
+                }
             }
 
             alert("Project created successfully!");
