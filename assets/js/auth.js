@@ -12,8 +12,20 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // on that library object, which has no .auth or .from — every DB call was failing.
 // We create the real client, then overwrite the global `supabase` with it so every
 // page's existing `supabase.from(...)` calls work without editing every file.
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const _supabaseCreateClient = supabase.createClient; // keep a handle before we overwrite `supabase` below
+const _supabase = _supabaseCreateClient(supabaseUrl, supabaseKey);
 window.supabase = _supabase;
+
+// Used when Finance Admin creates a staff account (users.html "Add User"):
+// calling auth.signUp() on the normal shared client above would sign the
+// browser in as the brand-new user and kick the admin out of their own
+// session. This returns a separate client that never touches localStorage,
+// so a signUp() call on it can't affect anyone's session but the new user's.
+window.createAuthOnlyClient = function () {
+    return _supabaseCreateClient(supabaseUrl, supabaseKey, {
+        auth: { persistSession: false, autoRefreshToken: false }
+    });
+};
 
 /**
  * 2. UI Helper Functions
@@ -391,3 +403,4 @@ function isValidPhone(value) {
     if (!/^[0-9+\-()\s]+$/.test(cleaned)) return false;
     return (cleaned.match(/[0-9]/g) || []).length >= 7;
 }
+
