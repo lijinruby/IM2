@@ -66,6 +66,29 @@
                             <label class="form-label text-muted small">System Role</label>
                             <input type="text" class="form-control" id="profile-role" disabled>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Job Title <span class="text-muted fw-normal">(optional)</span></label>
+                            <input type="text" class="form-control" id="profile-job-title" placeholder="e.g. Structural Engineer">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Member Since</label>
+                            <input type="text" class="form-control" id="profile-member-since" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm p-4 mb-4 d-none" id="staff-contact-card" style="border-radius: 16px;">
+                    <h6 class="fw-bold mb-1">Contact Info</h6>
+                    <p class="text-muted small mb-3">Optional — lets other staff reach you directly.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Contact Number</label>
+                            <input type="tel" class="form-control" id="profile-staff-contact-number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Contact Email</label>
+                            <input type="email" class="form-control" id="profile-staff-email">
+                        </div>
                     </div>
                 </div>
 
@@ -113,7 +136,7 @@
 
             const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('id, full_name, role, company_name, contact_number, email, address, account_manager_id, manager:profiles!account_manager_id ( full_name )')
+                .select('id, full_name, role, company_name, contact_number, email, address, account_manager_id, job_title, created_at, manager:profiles!account_manager_id ( full_name )')
                 .eq('id', user.id)
                 .single();
 
@@ -127,6 +150,8 @@
             currentProfile = profile;
             document.getElementById('profile-full-name').value = profile.full_name || '';
             document.getElementById('profile-role').value = roleLabel(profile.role);
+            document.getElementById('profile-job-title').value = profile.job_title || '';
+            document.getElementById('profile-member-since').value = fmtDate(profile.created_at);
 
             if (profile.role === 'client') {
                 document.getElementById('profile-subtitle').innerText = 'Your account and company details.';
@@ -135,6 +160,12 @@
                 document.getElementById('profile-email').value = profile.email || '';
                 document.getElementById('profile-address').value = profile.address || '';
                 document.getElementById('profile-account-manager').value = profile.manager ? profile.manager.full_name : 'Unassigned';
+            } else {
+                // PM / Finance Admin — optional personal contact info, no
+                // company fields (they're not a company).
+                document.getElementById('staff-contact-card').classList.remove('d-none');
+                document.getElementById('profile-staff-contact-number').value = profile.contact_number || '';
+                document.getElementById('profile-staff-email').value = profile.email || '';
             }
         }
 
@@ -143,7 +174,7 @@
             const fullName = document.getElementById('profile-full-name').value.trim();
             if (!fullName) { alert('Full name is required.'); return; }
 
-            const updates = { full_name: fullName };
+            const updates = { full_name: fullName, job_title: document.getElementById('profile-job-title').value.trim() || null };
 
             if (currentProfile.role === 'client') {
                 const companyName = document.getElementById('profile-company-name').value.trim();
@@ -159,6 +190,15 @@
                 updates.contact_number = contact || null;
                 updates.email = email || null;
                 updates.address = address || null;
+            } else {
+                const contact = document.getElementById('profile-staff-contact-number').value.trim();
+                const email = document.getElementById('profile-staff-email').value.trim();
+
+                if (contact && !isValidPhone(contact)) { alert('Please enter a valid contact number.'); return; }
+                if (email && !isValidEmail(email)) { alert('Please enter a valid email address.'); return; }
+
+                updates.contact_number = contact || null;
+                updates.email = email || null;
             }
 
             const btn = document.getElementById('save-profile-btn');
