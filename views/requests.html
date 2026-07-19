@@ -370,6 +370,17 @@
 
         function renderConsultations(items, role) {
             if (role === 'pm') {
+                // Safety net: don't rely solely on the consultation's status
+                // flipping to 'closed' (the close_consultation_request RPC
+                // call in submitProposal() can silently fail — permissions,
+                // network, etc). Check directly against proposals this PM
+                // has already sent, so "Create Proposal" can't be clicked
+                // twice for the same consultation even if that RPC didn't
+                // go through.
+                const proposedConsultationIds = new Set(
+                    allRequests.filter(r => r.consultation_request_id).map(r => r.consultation_request_id)
+                );
+
                 const body = document.getElementById('consultations-list');
                 body.innerHTML = '';
                 if (!items.length) {
@@ -380,6 +391,7 @@
                         const preferredName = c.client?.manager?.full_name || null;
                         const isMyClient = preferredId === window.currentUserId;
                         const claimedByOther = c.handled_by && c.handled_by !== window.currentUserId;
+                        const alreadyProposed = proposedConsultationIds.has(c.id);
 
                         let preferredTag = '';
                         if (preferredId && isMyClient) {
@@ -391,16 +403,19 @@
                         const claimTag = claimedByOther
                             ? `<div class="text-muted mt-1" style="font-size:10px"><i class="bi bi-lock-fill me-1"></i>Claimed by ${c.handler?.full_name || 'another PM'}</div>`
                             : '';
+                        const proposedTag = alreadyProposed
+                            ? `<div class="text-success mt-1" style="font-size:10px"><i class="bi bi-check-circle-fill me-1"></i>Proposal already sent</div>`
+                            : '';
 
                         body.innerHTML += `
                             <tr>
                                 <td class="ps-4 fw-bold">${c.client ? (c.client.company_name || c.client.full_name) : '—'}${preferredTag}</td>
                                 <td class="small">${(c.message || '—').slice(0, 80)}</td>
-                                <td class="small">${fmtDate(c.created_at)}${claimTag}</td>
+                                <td class="small">${fmtDate(c.created_at)}${claimTag}${proposedTag}</td>
                                 <td><span class="badge rounded-pill badge-${c.status} px-3 py-2">${requestStatusLabel(c.status).toUpperCase()}</span></td>
                                 <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-light border me-1" onclick="markContacted('${c.id}')" ${(c.status === 'contacted' || claimedByOther) ? 'disabled' : ''}>Mark Contacted</button>
-                                    <button class="btn btn-sm btn-amber" onclick="openNewProposalModal('${c.id}')" ${claimedByOther ? 'disabled' : ''}>Create Proposal</button>
+                                    <button class="btn btn-sm btn-light border me-1" onclick="markContacted('${c.id}')" ${(c.status === 'contacted' || claimedByOther || alreadyProposed) ? 'disabled' : ''}>Mark Contacted</button>
+                                    <button class="btn btn-sm btn-amber" onclick="openNewProposalModal('${c.id}')" ${(claimedByOther || alreadyProposed) ? 'disabled' : ''}>${alreadyProposed ? 'Proposal Sent' : 'Create Proposal'}</button>
                                 </td>
                             </tr>`;
                     });
@@ -609,18 +624,27 @@
             };
 
             let error;
+            let insertedRow = null;
             if (pendingEditId) {
                 ({ error } = await supabase.from('project_requests').update(payload).eq('id', pendingEditId));
             } else {
-                ({ error } = await supabase.from('project_requests').insert([{
+                ({ data: insertedRow, error } = await supabase.from('project_requests').insert([{
                     ...payload, requested_by: user.id, consultation_request_id: pendingConsultationId
-                }]));
+                }]).select().single());
             }
 
             btn.disabled = false;
             btn.innerText = 'Send to Client';
 
             if (error) { alert('Error: ' + error.message); return; }
+
+            // Reflect the new proposal locally right away — don't wait on the
+            // full loadRequests() round trip below to know whether it worked.
+            // This is what makes "Create Proposal" flip to "Proposal Sent"
+            // immediately for the row it was created from.
+            if (!pendingEditId && insertedRow) {
+                allRequests.unshift(insertedRow);
+            }
 
             // Consultation that spawned this proposal can be closed out.
             // Uses the RPC (not a direct update) so it also claims handled_by
@@ -630,8 +654,20 @@
             // proposal from a consultation, not when editing an existing one.
             if (!pendingEditId && pendingConsultationId) {
                 const { error: closeError } = await supabase.rpc('close_consultation_request', { request_id: pendingConsultationId });
-                if (closeError) console.warn('Could not close linked consultation:', closeError.message);
+                if (closeError) {
+                    console.warn('Could not close linked consultation:', closeError.message);
+                    alert('Proposal was sent, but the linked consultation request could not be auto-closed (' + closeError.message + '). It may still show in your inbox — this is harmless, "Create Proposal" is already disabled for it now.');
+                } else {
+                    const c = allConsultations.find(x => x.id === pendingConsultationId);
+                    if (c) c.status = 'closed';
+                }
             }
+
+            // Re-render immediately from local state (covers the case where
+            // the reload below is slow, or hiccups) — then still resync with
+            // the server afterward for full consistency.
+            renderRequests(allRequests, window.currentRole);
+            renderConsultations(allConsultations, window.currentRole);
 
             bootstrap.Modal.getInstance(document.getElementById('newProposalModal')).hide();
             document.getElementById('req-title').value = '';
