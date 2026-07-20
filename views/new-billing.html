@@ -64,16 +64,6 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                                <select class="form-select" id="billing-type">
-                                    <option value="mobilization">Mobilization</option>
-                                    <option value="progress" selected>Progress Billing</option>
-                                    <option value="final">Final Billing</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                <label for="billing-type">Billing Type</label>
-                            </div>
-
-                            <div class="form-floating mb-3">
                                 <input type="number" class="form-control" id="billing-amount" placeholder="0.00">
                                 <label for="billing-amount">Amount (PHP)</label>
                             </div>
@@ -114,7 +104,6 @@
 
         async function createBilling() {
             const projectId = document.getElementById('billing-project').value;
-            const billingType = document.getElementById('billing-type').value;
             const amount = document.getElementById('billing-amount').value;
             const description = document.getElementById('billing-description').value.trim() || null;
 
@@ -131,7 +120,7 @@
 
             const amt = parseFloat(amount) || 0;
             const { error } = await supabase.from('billing').insert([{
-                project_id: projectId, amount: amt, billing_type: billingType, description,
+                project_id: projectId, amount: amt, description,
                 status: 'unpaid', date_issued: new Date().toISOString().slice(0, 10), balance_left: amt
             }]);
 
