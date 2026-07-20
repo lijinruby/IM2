@@ -250,15 +250,6 @@
                         <label for="req-location">Project Location</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <select class="form-select" id="req-type">
-                            <option value="mobilization">Mobilization</option>
-                            <option value="progress" selected>Progress Billing</option>
-                            <option value="final">Final Billing</option>
-                            <option value="combination">Combination</option>
-                        </select>
-                        <label for="req-type">Project Type</label>
-                    </div>
-                    <div class="form-floating mb-3">
                         <textarea class="form-control" id="req-description" placeholder="Description" style="height: 90px"></textarea>
                         <label for="req-description">Project Description</label>
                     </div>
@@ -581,7 +572,6 @@
 
             document.getElementById('req-title').value = r.title || '';
             document.getElementById('req-location').value = r.location || '';
-            document.getElementById('req-type').value = r.project_type || 'combination';
             document.getElementById('req-description').value = r.description || '';
             document.getElementById('req-budget').value = r.estimated_budget || '';
             document.getElementById('req-start-date').value = r.preferred_start_date || '';
@@ -602,7 +592,6 @@
             const clientId = document.getElementById('proposal-client').value;
             const title = document.getElementById('req-title').value.trim();
             const location = document.getElementById('req-location').value.trim() || null;
-            const project_type = document.getElementById('req-type').value;
             const description = document.getElementById('req-description').value.trim() || null;
             const budget = document.getElementById('req-budget').value || null;
             const startDate = document.getElementById('req-start-date').value || null;
@@ -619,7 +608,7 @@
             btn.innerText = pendingEditId ? 'Saving...' : 'Sending...';
 
             const payload = {
-                client_id: clientId, title, location, project_type,
+                client_id: clientId, title, location,
                 description, estimated_budget: budget ? parseFloat(budget) : null, preferred_start_date: startDate,
             };
 
@@ -687,7 +676,6 @@
             document.getElementById('reviewRequestDetails').innerHTML = `
                 <dt class="col-4 text-muted">Title</dt><dd class="col-8">${r.title}</dd>
                 <dt class="col-4 text-muted">Location</dt><dd class="col-8">${r.location || '—'}</dd>
-                <dt class="col-4 text-muted">Type</dt><dd class="col-8 text-capitalize">${(r.project_type||'—').replace('_',' ')}</dd>
                 <dt class="col-4 text-muted">Description</dt><dd class="col-8">${r.description || '—'}</dd>
                 <dt class="col-4 text-muted">Est. Budget</dt><dd class="col-8">${r.estimated_budget ? php.format(r.estimated_budget) : '—'}</dd>
                 <dt class="col-4 text-muted">Preferred Start</dt><dd class="col-8">${fmtDate(r.preferred_start_date)}</dd>

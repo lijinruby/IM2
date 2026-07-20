@@ -98,16 +98,6 @@
                                 <label for="project-financial-admin">Financial Admin</label>
                             </div>
 
-                            <div class="form-floating mb-3">
-                                <select class="form-select" id="project-type">
-                                    <option value="mobilization">Mobilization (Downpayment)</option>
-                                    <option value="progress">Progress Billing</option>
-                                    <option value="final">Final Billing</option>
-                                    <option value="combination" selected>Combination</option>
-                                </select>
-                                <label for="project-type">Payment Mode / Type</label>
-                            </div>
-
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
                                     <div class="form-floating">
@@ -242,10 +232,6 @@
                     document.getElementById('project-name').value = req.title || '';
                     document.getElementById('project-location').value = req.location || '';
                     document.getElementById('project-description').value = req.description || '';
-                    if (req.project_type) {
-                        const typeMap = { mobilization: 'mobilization', progress: 'progress', final: 'final' };
-                        document.getElementById('project-type').value = typeMap[req.project_type] || 'combination';
-                    }
                     clientSelect.value = req.client_id;
                     clientSelect.disabled = true;
                 }
@@ -269,7 +255,6 @@
             const status = document.getElementById('project-status').value;
             const location = document.getElementById('project-location').value.trim() || null;
             const description = document.getElementById('project-description').value.trim() || null;
-            const projectType = document.getElementById('project-type').value;
             const noaDate = document.getElementById('project-noa-date').value || null;
             const ntpDate = document.getElementById('project-ntp-date').value || null;
             const workingDays = document.getElementById('project-working-days').value || null;
@@ -288,7 +273,7 @@
             const { data: newProject, error } = await supabase.from('projects').insert([{
                 name, client_id: clientId, pm_id: pmId, financial_admin_id: financialAdminId,
                 contract_amount: parseFloat(amount) || 0, additional_costs: parseFloat(additionalCosts) || 0,
-                status, location, description, project_type: projectType,
+                status, location, description,
                 notice_of_award_date: noaDate, notice_to_proceed_date: ntpDate,
                 working_days: workingDays ? parseInt(workingDays) : null, completion_date: completionDate,
                 progress_percentage: 0

@@ -391,7 +391,6 @@
                     <dt class="col-5 text-muted">Financial Admin</dt><dd class="col-7">${faName}</dd>
                     <dt class="col-5 text-muted">Location</dt><dd class="col-7">${canEdit ? `<input type="text" class="form-control form-control-sm" id="detail-location" value="${proj.location || ''}">` : (proj.location || '—')}</dd>
                     <dt class="col-5 text-muted">Description</dt><dd class="col-7">${canEdit ? `<textarea rows="3" class="form-control form-control-sm" id="detail-description">${proj.description || ''}</textarea>` : (proj.description || '—')}</dd>
-                    <dt class="col-5 text-muted">Payment Mode / Type</dt><dd class="col-7">${canEdit ? `<select class="form-select form-select-sm" id="detail-project-type"><option value="mobilization" ${proj.project_type === 'mobilization' ? 'selected' : ''}>Mobilization</option><option value="progress" ${proj.project_type === 'progress' ? 'selected' : ''}>Progress Billing</option><option value="final" ${proj.project_type === 'final' ? 'selected' : ''}>Final</option></select>` : (proj.project_type || '—')}</dd>
                     <dt class="col-5 text-muted">Notice of Award</dt><dd class="col-7">${canEdit ? `<input type="date" class="form-control form-control-sm" id="detail-noa" value="${formatInputDate(proj.notice_of_award_date)}">` : fmtDate(proj.notice_of_award_date)}</dd>
                     <dt class="col-5 text-muted">Notice to Proceed</dt><dd class="col-7">${canEdit ? `<input type="date" class="form-control form-control-sm" id="detail-ntp" value="${formatInputDate(proj.notice_to_proceed_date)}">` : fmtDate(proj.notice_to_proceed_date)}</dd>
                     <dt class="col-5 text-muted">Working Days</dt><dd class="col-7">${canEdit ? `<input type="number" min="0" class="form-control form-control-sm" id="detail-working-days" value="${proj.working_days || ''}">` : (proj.working_days ?? '—')}</dd>
@@ -473,7 +472,6 @@
             const pm_id = document.getElementById('detail-pm-id')?.value || null;
             const location = document.getElementById('detail-location')?.value.trim();
             const description = document.getElementById('detail-description')?.value.trim();
-            const project_type = document.getElementById('detail-project-type')?.value;
             const notice_of_award_date = document.getElementById('detail-noa')?.value || null;
             const notice_to_proceed_date = document.getElementById('detail-ntp')?.value || null;
             const working_days = document.getElementById('detail-working-days')?.value;
@@ -506,7 +504,6 @@
                 pm_id,
                 location,
                 description,
-                project_type,
                 notice_of_award_date,
                 notice_to_proceed_date,
                 completion_date,
