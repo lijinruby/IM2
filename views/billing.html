@@ -57,7 +57,7 @@
                 </div>
 
                 <div class="row g-3 mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="card kpi-card p-4 border-0">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="kpi-icon bg-primary-subtle text-primary"><i class="bi bi-receipt"></i></div>
@@ -65,7 +65,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="card kpi-card p-4 border-0">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="kpi-icon bg-success-subtle text-success"><i class="bi bi-cash-coin"></i></div>
@@ -73,11 +73,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="card kpi-card p-4 border-0">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="kpi-icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-circle"></i></div>
                                 <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Outstanding Balance</small><h3 class="fw-bold mb-0" id="total-outstanding">₱0.00</h3></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card kpi-card p-4 border-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="kpi-icon bg-warning-subtle text-warning"><i class="bi bi-file-earmark-excel"></i></div>
+                                <div><small class="text-muted fw-bold text-uppercase" style="font-size:10px">Unbilled Contract Value</small><h3 class="fw-bold mb-0" id="total-unbilled">₱0.00</h3></div>
                             </div>
                         </div>
                     </div>
@@ -99,7 +107,6 @@
                                         <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
                                             <th class="ps-4">Statement No.</th>
                                             <th>Project</th>
-                                            <th>Type</th>
                                             <th>Date Issued</th>
                                             <th>Amount</th>
                                             <th>Balance Left</th>
@@ -108,7 +115,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="billing-list">
-                                        <tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading billing records...</span></td></tr>
+                                        <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm me-2"></div><span class="text-muted">Loading billing records...</span></td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -124,6 +131,7 @@
     <script>
         const php = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
         let allBilling = [];
+        let allProjects = [];
 
         async function loadBilling() {
             const list = document.getElementById('billing-list');
@@ -134,36 +142,43 @@
                 window.currentRole = role;
 
                 let query = supabase.from('billing').select(`
-                    id, amount, balance_left, status, date_issued, billing_type, description, project_id,
+                    id, amount, balance_left, status, date_issued, description, project_id,
                     projects ( name, pm_id, client_id )
                 `).order('date_issued', { ascending: false });
 
-                const { data: billing, error } = await query;
+                let projQuery = supabase.from('projects').select('id, contract_amount, additional_costs, pm_id, client_id');
+
+                const [{ data: billing, error }, { data: projects, error: projError }] = await Promise.all([query, projQuery]);
                 if (error) throw error;
+                if (projError) throw projError;
 
                 let scoped = billing || [];
+                let scopedProjects = projects || [];
                 if (role === 'pm') {
                     scoped = scoped.filter(b => b.projects && b.projects.pm_id === user.id);
+                    scopedProjects = scopedProjects.filter(p => p.pm_id === user.id);
                 } else if (role === 'client') {
                     // Client account = company account: the client's own id IS
                     // the client_id stored on their projects now.
                     scoped = scoped.filter(b => b.projects && b.projects.client_id === user.id);
+                    scopedProjects = scopedProjects.filter(p => p.client_id === user.id);
                 }
 
                 allBilling = scoped;
-                renderBilling(scoped);
+                allProjects = scopedProjects;
+                renderBilling(scoped, scopedProjects);
             } catch (err) {
                 console.error(err);
-                list.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-danger small">Could not load billing: ${err.message || 'Unknown error'}</td></tr>`;
+                list.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger small">Could not load billing: ${err.message || 'Unknown error'}</td></tr>`;
             }
         }
 
-        function renderBilling(rows) {
+        function renderBilling(rows, projects) {
             const list = document.getElementById('billing-list');
             const role = normalizeRole(window.currentRole);
             list.innerHTML = '';
             if (!rows || rows.length === 0) {
-                list.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted">No billing statements found.</td></tr>';
+                list.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">No billing statements found.</td></tr>';
             }
 
             let totalBilled = 0, totalOutstanding = 0;
@@ -185,7 +200,6 @@
                     <tr>
                         <td class="ps-4 fw-bold text-navy">BS-${b.id.toString().slice(0, 4).toUpperCase()}</td>
                         <td>${b.projects ? b.projects.name : 'Unknown Project'}</td>
-                        <td class="text-capitalize small text-muted">${(b.billing_type || '—').replace('_',' ')}</td>
                         <td>${fmtDate(b.date_issued)}</td>
                         <td class="fw-bold">${php.format(amt)}</td>
                         <td class="${balance > 0 ? 'text-danger fw-bold' : 'text-success'}">${php.format(balance)}</td>
@@ -194,14 +208,26 @@
                     </tr>`;
             });
 
+            // Unbilled Contract Value: total contract value across projects minus
+            // whatever has actually been issued as a billing statement so far.
+            // This is separate from "Outstanding Balance" (unpaid on statements
+            // already issued) — it surfaces contract value that hasn't even been
+            // billed yet, which "Outstanding Balance" alone won't show.
+            const projList = projects || allProjects || [];
+            const totalContractValue = projList.reduce((sum, p) => {
+                return sum + (parseFloat(p.contract_amount) || 0) + (parseFloat(p.additional_costs) || 0);
+            }, 0);
+            const totalUnbilled = Math.max(0, totalContractValue - totalBilled);
+
             document.getElementById('total-billed').innerText = php.format(totalBilled);
             document.getElementById('total-collected').innerText = php.format(totalBilled - totalOutstanding);
             document.getElementById('total-outstanding').innerText = php.format(totalOutstanding);
+            document.getElementById('total-unbilled').innerText = php.format(totalUnbilled);
         }
 
         document.getElementById('billingSearch')?.addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase();
-            renderBilling(allBilling.filter(b => (b.projects?.name || '').toLowerCase().includes(q)));
+            renderBilling(allBilling.filter(b => (b.projects?.name || '').toLowerCase().includes(q)), allProjects);
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
