@@ -9,6 +9,21 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="role-loading">
+    <script>
+        // Apply the last-known role instantly from cache, before the nav even
+        // paints, so returning users don't see the sidebar flash down to the
+        // no-role state while protectPage() re-confirms the role from the DB.
+        // protectPage() (auth.js) still re-applies/corrects this once the
+        // real check comes back, so a stale or missing cache just falls back
+        // to today's loading-then-reveal behavior.
+        (function () {
+            var cachedRole = localStorage.getItem('userRole');
+            if (cachedRole) {
+                document.body.classList.remove('role-loading');
+                document.body.classList.add('role-' + cachedRole);
+            }
+        })();
+    </script>
     <div class="shell">
         <nav class="sidebar shadow" id="sidebar">
             <div class="brand p-3 d-flex align-items-center gap-3 border-bottom border-white border-opacity-10" style="height:70px">
@@ -699,7 +714,6 @@
             await loadRequests();
         });
         // Sidebar toggle is wired once in auth.js (initSidebar) — do not duplicate it here.
-        
     </script>
 </body>
 </html>
