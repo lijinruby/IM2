@@ -371,12 +371,9 @@
                 }).join('') || '<option value="">No PMs available</option>';
             }
 
-            // Closed + fully paid = nothing left to bill. Used below to block
-            // "Flag as Ready to Bill" once both are true.
-            const { data: projBilling } = await supabase.from('billing').select('status, balance_left, amount').eq('project_id', projectId);
-            const hasBilling = !!(projBilling && projBilling.length);
-            const fullyPaid = hasBilling && projBilling.every(b => b.status === 'paid' || (parseFloat(b.balance_left ?? b.amount) || 0) <= 0);
-            const nothingLeftToBill = proj.status === 'closed' && fullyPaid;
+            // Closed projects are done — billing has to happen before closing,
+            // so once status is 'closed' the flag is blocked outright, paid or not.
+            const nothingLeftToBill = proj.status === 'closed';
 
 
             const formatInputDate = (value) => {
@@ -410,7 +407,7 @@
                             <div class="fw-bold small mb-1"><i class="bi bi-cash-coin me-1"></i>Billing</div>
                             <div class="text-muted small">${
                                 nothingLeftToBill
-                                    ? 'This project is closed and already fully paid — nothing left to bill.'
+                                    ? 'This project is closed — it can no longer be flagged for billing.'
                                     : (proj.billing_flagged ? `Flagged ready to bill${proj.billing_flagged_at ? ' on ' + fmtDate(proj.billing_flagged_at) : ''}. Finance Admin has been signaled.` : 'Let Finance Admin know this project is ready to be billed.')
                             }</div>
                         </div>
