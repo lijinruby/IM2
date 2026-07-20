@@ -92,9 +92,8 @@ issuing a billing statement — are handled as follows:
 ### 3.3 Billing → payment
 
 1. **Finance Admin** issues a billing statement directly against a project:
-   amount, billing type (`mobilization` / `progress` / `final` / `other`),
-   description. It appears immediately on **Billing Statements**, visible
-   to the client it belongs to.
+   amount, description. It appears immediately on **Billing Statements**,
+   visible to the client it belongs to.
 2. Optionally, a **PM** can flag their own project as **"Ready to Bill"**
    from Project Portfolio, with a short note — a one-way nudge to Finance
    Admin, not a request that needs approval. A closed project with nothing
@@ -231,7 +230,7 @@ owe money against. Issued directly by Finance Admin.
 - `project_id` (FK → projects.id)
 - `amount` — the billed amount
 - `status` — e.g. `unpaid`, `paid`, partially paid
-- `description`, `billing_type`, `date_issued`
+- `description`, `date_issued`
 - `balance_left` — auto-maintained by a trigger every time a payment lands
 
 ### payments
@@ -371,10 +370,11 @@ Smaller fixes made along the way, grouped by area:
   costs, and working days must now be valid, non-negative numbers (not just
   "not empty"); email and contact number go through basic shape-checking
   before save.
-- **Project archiving** — Finance Admin can archive a finished/cancelled
-  project (sets it to Closed) instead of deleting it outright, since
-  billing, documents, and payments all reference it and deleting the row
-  would orphan that data.
+- **Project archiving simplified** — the manual "Archive Project" button
+  was removed. A project's archived state is just its `status` being
+  `Closed`, which already saves through the normal project edit form —
+  so a separate archive action was redundant and has been dropped in
+  favor of just setting status to Closed.
 - **Proposal edit/withdraw** — a PM can edit or withdraw their own proposal
   while it's still pending; once the client has confirmed or declined it,
   neither action is offered.
@@ -382,8 +382,13 @@ Smaller fixes made along the way, grouped by area:
   and company link, letting Finance Admin change a user's role or company
   link, and hosting the staff-only signup link. (Email addresses aren't
   shown here — they live on the auth account, not the app-visible profile.)
+- **Billing type field removed** — the `billing_type` dropdown
+  (Mobilization/Progress/Final/Other) was dropped from the "Issue Billing
+  Statement" form, the billing table, and the `billing` schema; a
+  statement's amount and description are enough on their own.
 - **Demo/reset tooling** — a seed script for demo data and a reset script
   that wipes business data while leaving accounts intact are available for
   testing and presentations; both went through a couple of ordering
   bugfixes (circular foreign keys between tables that reference each other,
   and dependent rows needing to be cleared before the rows they point to).
+
