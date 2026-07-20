@@ -1,5 +1,7 @@
 # ALEK Consultants — Project Management & Billing System
 
+![Under construction but in a fun way](https://media.giphy.com/media/xT9IgG50Fb7Mi0prBC/giphy.gif)
+
 A web app for **ALEK Consultants Inc.** that manages the full lifecycle of a
 project: from a client's initial consultation request, through an
 ALEK-authored proposal, client confirmation, execution, billing, and payment
@@ -391,4 +393,12 @@ Smaller fixes made along the way, grouped by area:
   testing and presentations; both went through a couple of ordering
   bugfixes (circular foreign keys between tables that reference each other,
   and dependent rows needing to be cleared before the rows they point to).
+
+---
+
+## 9. Contributing
+
+Found a bug? Congratulations, you found a bug. 
+
+![This is fine](https://media.giphy.com/media/NTur7XlVDUdqM/giphy.gif)
 
