@@ -162,6 +162,36 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center" style="cursor:pointer" data-bs-toggle="collapse" data-bs-target="#archivedProjectsCollapse">
+                                <h6 class="fw-bold mb-0 text-muted"><i class="bi bi-archive me-2"></i>Archived Projects <span class="badge rounded-pill bg-secondary-subtle text-secondary ms-1" id="archived-count">0</span></h6>
+                                <i class="bi bi-chevron-down text-muted"></i>
+                            </div>
+                            <div class="collapse" id="archivedProjectsCollapse">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light">
+                                            <tr style="font-size: 11px; text-transform: uppercase; color: #6c757d;">
+                                                <th class="ps-4">Code</th>
+                                                <th>Project Name</th>
+                                                <th data-role="admin">Client</th>
+                                                <th>Progress</th>
+                                                <th class="text-end">Status</th>
+                                                <th class="text-end pe-4">Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="archived-projects-list">
+                                            <tr><td colspan="6" class="text-center py-4 text-muted small">No archived projects.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -235,59 +265,72 @@
                     </div>`;
         }
 
+        function buildProjectRow(proj, role) {
+            const clientName = proj.client ? (proj.client.company_name || proj.client.full_name) : '<span class="text-muted">No Client</span>';
+            const canEdit = role === 'admin' || (role === 'pm' && proj.pm_id === window.currentUserId);
+
+            const statusClass = `status-${proj.status || 'ongoing'}`;
+            const statusCell = canEdit
+                ? `<div class="status-input-wrapper"><select class="form-select form-select-sm status-select ${statusClass}" style="width: 150px;" onchange="updateProjectStatus('${proj.id}', this.value)">
+                        <option value="planning" ${proj.status === 'planning' ? 'selected' : ''}>PLANNING</option>
+                        <option value="mobilization" ${proj.status === 'mobilization' ? 'selected' : ''}>MOBILIZATION</option>
+                        <option value="ongoing" ${(!proj.status || proj.status === 'ongoing' || proj.status === 'on_hold') ? 'selected' : ''}>ONGOING</option>
+                        <option value="for_review" ${proj.status === 'for_review' ? 'selected' : ''}>FOR REVIEW</option>
+                        <option value="completed" ${proj.status === 'completed' ? 'selected' : ''}>COMPLETED</option>
+                        <option value="closed" ${proj.status === 'closed' ? 'selected' : ''}>CLOSED</option>
+                    </select></div>`
+                : `<span class="status-pill ${statusClass}">${statusLabel(proj.status).toUpperCase()}</span>`;
+
+            const clientCell = role === 'admin' ? `<td><div class="d-flex align-items-center gap-2"><i class="bi bi-building text-muted"></i><span>${clientName}</span></div></td>` : '';
+
+            return `
+                <tr>
+                    <td class="ps-4 fw-bold text-navy">PRJ-${proj.id.toString().slice(0, 4).toUpperCase()}</td>
+                    <td><div class="fw-bold">${proj.name}</div>${proj.billing_flagged ? '<div class="badge rounded-pill bg-success-subtle text-success mt-1" style="font-size:10px"><i class="bi bi-cash-coin me-1"></i>Ready to Bill</div>' : ''}</td>
+                    ${clientCell}
+                    <td>${progressBar(proj.progress_percentage)}</td>
+                    <td class="text-end">${statusCell}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-light btn-sm border" title="View Details" onclick="showProjectDetails('${proj.id}')"><i class="bi bi-eye"></i></button>
+                    </td>
+                </tr>
+            `;
+        }
+
         function renderProjects(projects) {
             const list = document.getElementById('projects-list');
+            const archivedList = document.getElementById('archived-projects-list');
             list.innerHTML = '';
             let totalContract = 0, totalProgress = 0;
 
-            if (!projects || projects.length === 0) {
-                list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No projects found.</td></tr>';
-            }
-
             const role = normalizeRole(window.currentRole);
+            const all = projects || [];
+            const active = all.filter(p => (p.status || '').toLowerCase() !== 'closed');
+            const archived = all.filter(p => (p.status || '').toLowerCase() === 'closed');
 
-            projects.forEach(proj => {
+            if (active.length === 0) {
+                list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No active projects found.</td></tr>';
+            }
+            active.forEach(proj => {
                 const amt = parseFloat(proj.contract_amount) || 0;
                 totalContract += amt;
                 totalProgress += (proj.progress_percentage || 0);
-
-                const clientName = proj.client ? (proj.client.company_name || proj.client.full_name) : '<span class="text-muted">No Client</span>';
-                const canEdit = role === 'admin' || (role === 'pm' && proj.pm_id === window.currentUserId);
-
-                const statusClass = `status-${proj.status || 'ongoing'}`;
-                const statusCell = canEdit
-                    ? `<div class="status-input-wrapper"><select class="form-select form-select-sm status-select ${statusClass}" style="width: 150px;" onchange="updateProjectStatus('${proj.id}', this.value)">
-                            <option value="planning" ${proj.status === 'planning' ? 'selected' : ''}>PLANNING</option>
-                            <option value="mobilization" ${proj.status === 'mobilization' ? 'selected' : ''}>MOBILIZATION</option>
-                            <option value="ongoing" ${(!proj.status || proj.status === 'ongoing' || proj.status === 'on_hold') ? 'selected' : ''}>ONGOING</option>
-                            <option value="for_review" ${proj.status === 'for_review' ? 'selected' : ''}>FOR REVIEW</option>
-                            <option value="completed" ${proj.status === 'completed' ? 'selected' : ''}>COMPLETED</option>
-                            <option value="closed" ${proj.status === 'closed' ? 'selected' : ''}>CLOSED</option>
-                        </select></div>`
-                    : `<span class="status-pill ${statusClass}">${statusLabel(proj.status).toUpperCase()}</span>`;
-
-                const clientCell = role === 'admin' ? `<td><div class="d-flex align-items-center gap-2"><i class="bi bi-building text-muted"></i><span>${clientName}</span></div></td>` : '';
-
-                list.innerHTML += `
-                    <tr>
-                        <td class="ps-4 fw-bold text-navy">PRJ-${proj.id.toString().slice(0, 4).toUpperCase()}</td>
-                        <td><div class="fw-bold">${proj.name}</div>${proj.billing_flagged ? '<div class="badge rounded-pill bg-success-subtle text-success mt-1" style="font-size:10px"><i class="bi bi-cash-coin me-1"></i>Ready to Bill</div>' : ''}</td>
-                        ${clientCell}
-                        <td>${progressBar(proj.progress_percentage)}</td>
-                        <td class="text-end">${statusCell}</td>
-                        <td class="text-end pe-4">
-                            <button class="btn btn-light btn-sm border" title="View Details" onclick="showProjectDetails('${proj.id}')"><i class="bi bi-eye"></i></button>
-                        </td>
-                    </tr>
-                `;
+                list.innerHTML += buildProjectRow(proj, role);
             });
 
-            document.getElementById('project-count') && (document.getElementById('project-count').innerText = projects.length);
-            document.getElementById('project-count-pm') && (document.getElementById('project-count-pm').innerText = projects.length);
-            document.getElementById('project-count-client') && (document.getElementById('project-count-client').innerText = projects.length);
+            if (archivedList) {
+                archivedList.innerHTML = archived.length
+                    ? archived.map(proj => buildProjectRow(proj, role)).join('')
+                    : '<tr><td colspan="6" class="text-center py-4 text-muted small">No archived projects.</td></tr>';
+            }
+            document.getElementById('archived-count') && (document.getElementById('archived-count').innerText = archived.length);
+
+            document.getElementById('project-count') && (document.getElementById('project-count').innerText = active.length);
+            document.getElementById('project-count-pm') && (document.getElementById('project-count-pm').innerText = active.length);
+            document.getElementById('project-count-client') && (document.getElementById('project-count-client').innerText = active.length);
             document.getElementById('total-contract-value') && (document.getElementById('total-contract-value').innerText = php.format(totalContract));
             document.getElementById('total-contract-value-pm') && (document.getElementById('total-contract-value-pm').innerText = php.format(totalContract));
-            const avg = projects.length ? Math.round(totalProgress / projects.length) : 0;
+            const avg = active.length ? Math.round(totalProgress / active.length) : 0;
             ['avg-progress', 'avg-progress-pm', 'avg-progress-client'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerText = avg + '%';
@@ -414,7 +457,7 @@
                             ? `<button class="btn btn-light btn-sm border flex-shrink-0" onclick="setBillingFlag('${proj.id}', false)">Unflag</button>`
                             : `<button class="btn btn-amber btn-sm flex-shrink-0" onclick="setBillingFlag('${proj.id}', true)">Flag as Ready to Bill</button>`)}
                     </div>
-                    ${(!proj.billing_flagged && !nothingLeftToBill) ? `<textarea class="form-control form-control-sm mt-2" id="billing-flag-note-${proj.id}" placeholder="Optional note for Finance Admin (e.g. amount, billing type)" rows="2">${proj.billing_flag_note || ''}</textarea>` : (proj.billing_flag_note ? `<div class="small text-muted mt-2 fst-italic">"${proj.billing_flag_note}"</div>` : '')}
+                    ${(!proj.billing_flagged && !nothingLeftToBill) ? `<textarea class="form-control form-control-sm mt-2" id="billing-flag-note-${proj.id}" placeholder="Optional note for Finance Admin (e.g. amount)" rows="2">${proj.billing_flag_note || ''}</textarea>` : (proj.billing_flag_note ? `<div class="small text-muted mt-2 fst-italic">"${proj.billing_flag_note}"</div>` : '')}
                 </div>` : ''}
                 ${role === 'admin' && proj.billing_flagged ? `
                 <div class="alert alert-success d-flex justify-content-between align-items-center small mb-3">
@@ -424,7 +467,7 @@
                         <button class="btn btn-light btn-sm border" onclick="setBillingFlag('${proj.id}', false)">Clear</button>
                     </div>
                 </div>` : ''}
-                ${canEdit ? `<div class="d-flex justify-content-end gap-2 mb-3">${role === 'admin' ? `<button class="btn btn-outline-danger" onclick="archiveProject('${proj.id}')"><i class="bi bi-archive me-1"></i> Archive Project</button>` : ''}<button class="btn btn-amber" onclick="saveProjectDetails('${proj.id}')">Save Changes</button></div>` : ''}
+                ${canEdit ? `<div class="d-flex justify-content-end gap-2 mb-3"><button class="btn btn-amber" onclick="saveProjectDetails('${proj.id}')">Save Changes</button></div>` : ''}
                 <hr>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold mb-0"><i class="bi bi-folder2-open me-2"></i>Project Documents</h6>
@@ -539,16 +582,9 @@
 
         // Projects are never hard-deleted — they're referenced by billing,
         // documents, and payments, so removing the row would orphan all of
-        // that. "Archive" instead sets status to Closed (already one of the
-        // six spec statuses) via the same update path saveProjectDetails
-        // uses, so it's covered by the same RLS as any other status change.
-        async function archiveProject(projectId) {
-            if (!confirm('Archive this project? This sets its status to Closed. Its billing history, documents, and payments stay intact and remain viewable — this cannot be undone from here.')) return;
-            const { error } = await supabase.from('projects').update({ status: 'closed' }).eq('id', projectId);
-            if (error) { alert('Failed to archive project: ' + error.message); return; }
-            bootstrap.Modal.getInstance(document.getElementById('projectDetailsModal'))?.hide();
-            await loadProjects();
-        }
+        // that. Archiving happens automatically once a project's status is
+        // set to Closed (already one of the six spec statuses) — no manual
+        // archive action needed.
 
         async function uploadProjectDocument(projectId, file) {
             if (!file) return;
@@ -572,6 +608,13 @@
             if (doc?.storage_path) await supabase.storage.from('project-documents').remove([doc.storage_path]);
             loadProjectDocuments(projectId, true);
         }
+
+        document.getElementById('archivedProjectsCollapse')?.addEventListener('show.bs.collapse', () => {
+            document.querySelector('[data-bs-target="#archivedProjectsCollapse"] .bi-chevron-down')?.classList.replace('bi-chevron-down', 'bi-chevron-up');
+        });
+        document.getElementById('archivedProjectsCollapse')?.addEventListener('hide.bs.collapse', () => {
+            document.querySelector('[data-bs-target="#archivedProjectsCollapse"] .bi-chevron-up')?.classList.replace('bi-chevron-up', 'bi-chevron-down');
+        });
 
         document.getElementById('projectSearch').addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase();
